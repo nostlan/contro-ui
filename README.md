@@ -1,1 +1,3 @@
 # contro-ui
+
+requires jQuery
