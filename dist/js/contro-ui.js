@@ -11,11 +11,7 @@ const CUI = function() {
 		and
 	} = require('contro');
 	let gamepad = new Gamepad();
-	// let gamepad = {
-	// 	isConnected: () => {
-	// 		return false;
-	// 	}
-	// };
+
 	let gamepadConnected = false;
 	let btnNames = [
 		'a', 'b', 'x', 'y',
@@ -624,7 +620,7 @@ const CUI = function() {
 		});
 	}
 
-	function err(msg) {
+	function error(msg) {
 		log(msg);
 		let $errMenu = $('#errMenu');
 		if (!$errMenu.length) {
@@ -642,6 +638,8 @@ const CUI = function() {
 		$('#errMenu p').text(msg);
 		this.uiStateChange('errMenu');
 	}
-	this.err = err;
+	this.error = error;
+	this.err = error;
+	this.er = error;
 };
 module.exports = new CUI();
