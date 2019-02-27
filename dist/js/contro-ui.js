@@ -162,6 +162,10 @@ const CUI = function() {
 		} else {
 			customActions(act, this.btns.includes(act));
 		}
+		if (act == 'quit') {
+			app.quit();
+			process.kill('SIGINT');
+		}
 	};
 	this.doAction = doAction;
 
@@ -563,7 +567,17 @@ const CUI = function() {
 				}
 				await buttonPressed(i);
 			}
-			let vect = gamepad.stick('left').query();
+			let vectL = gamepad.stick('left').query();
+			this.stick(vectL, 'left');
+			let vectR = gamepad.stick('right').query();
+			this.stick(vectR, 'right');
+			gamepadConnected = true;
+		}
+		requestAnimationFrame(loop);
+	}
+	this.axes = function(vect, axe) {
+		axe = axe || 'left';
+		if (axe == 'left') {
 			if (vect.y < -.5) {
 				if (stickNue.y) move('up');
 				stickNue.y = false;
@@ -588,10 +602,10 @@ const CUI = function() {
 				vect.y > -.5) {
 				stickNue.y = true;
 			}
-			gamepadConnected = true;
 		}
-		requestAnimationFrame(loop);
-	}
+	};
+	this.stick = this.axes;
+
 	this.start = function(options) {
 		opt = options || {};
 		$('.uie').off('click').click(uieClicked);
