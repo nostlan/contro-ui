@@ -42,5 +42,5 @@
     "postversion": "git push",
     "V": "npm run v | git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "1.0.4"
+  "version": "1.0.5"
 }

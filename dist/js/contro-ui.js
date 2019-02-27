@@ -532,41 +532,11 @@ const CUI = function() {
 
 	async function loop() {
 		if (gamepadConnected || gamepad.isConnected()) {
-			for (let i in btns) {
-				let btn = btns[i];
-				// incomplete maps are okay
-				// no one to one mapping necessary
-				i = map[i] || i;
-
-				if (!gamepadConnected) {
-					uiOnChange(ui, uiSub, true);
-					$('html').addClass('cui-gamepadConnected');
-				}
-				let query = btn.query();
-				// if button is not pressed, query is false and unchanged
-				if (!btnStates[i] && !query) {
-					continue;
-				}
-				// if button press ended query is false
-				if (!query) {
-					// log(i + ' button press end');
-					btnStates[i] = 0;
-					continue;
-				}
-				// if button is held, query is true and unchanged
-				if (btnStates[i] && query) {
-					btnStates[i] += 1;
-					await buttonHeld(i, btnStates[i] * 16);
-					continue;
-				}
-				// save button state change
-				btnStates[i] += 1;
-				// if button press just started, query is true
-				if (opt.v) {
-					log(i + ' button press start');
-				}
-				await buttonPressed(i);
+			if (!gamepadConnected) {
+				uiOnChange(ui, uiSub, true);
+				$('html').addClass('cui-gamepadConnected');
 			}
+			await this.parseBtns(btns);
 			let vectL = gamepad.stick('left').query();
 			this.stick(vectL, 'left');
 			let vectR = gamepad.stick('right').query();
@@ -574,6 +544,44 @@ const CUI = function() {
 			gamepadConnected = true;
 		}
 		requestAnimationFrame(loop);
+	}
+	this.parseBtns = async function(btns) {
+		for (let i in btns) {
+			let btn = btns[i];
+			// incomplete maps are okay
+			// no one to one mapping necessary
+			i = map[i] || i;
+
+			let query;
+			if (typeof btn == 'boolean') {
+				query = btn;
+			} else {
+				query = btn.query();
+			}
+			// if button is not pressed, query is false and unchanged
+			if (!btnStates[i] && !query) {
+				continue;
+			}
+			// if button press ended query is false
+			if (!query) {
+				// log(i + ' button press end');
+				btnStates[i] = 0;
+				continue;
+			}
+			// if button is held, query is true and unchanged
+			if (btnStates[i] && query) {
+				btnStates[i] += 1;
+				await buttonHeld(i, btnStates[i] * 16);
+				continue;
+			}
+			// save button state change
+			btnStates[i] += 1;
+			// if button press just started, query is true
+			if (opt.v) {
+				log(i + ' button press start');
+			}
+			await buttonPressed(i);
+		}
 	}
 	this.axes = function(vect, axe) {
 		axe = axe || 'left';
