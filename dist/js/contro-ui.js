@@ -13,6 +13,7 @@ const CUI = function() {
 	let gamepad = new Gamepad();
 
 	let gamepadConnected = false;
+	let gamepadType = 'default';
 	let btnNames = [
 		'a', 'b', 'x', 'y',
 		'up', 'down', 'left', 'right',
@@ -84,13 +85,22 @@ const CUI = function() {
 			map: {}
 		}
 	};
-
-	this.mapButtons = function(gamepad, session, normalize) {
-		let prof = remappingProfiles[gamepad.profile];
-		if (!prof) {
-			prof = remappingProfiles['Xbox_PS_Adaptive'];
+	let sys = 'PC';
+	let gamepadPrefs = {
+		default: {
+			profile: 'Xbox_PS_Adaptive',
+			map: {}
 		}
-		let sys = session.sys;
+	};
+	let normalize = {};
+
+	function mapButtons(system, gPrefs, norm) {
+		sys = system || sys;
+		gamepadPrefs = gPrefs || gamepadPrefs;
+		normalize = norm || normalize;
+
+		let pad = gamepadPrefs[gamepadType];
+		let prof = remappingProfiles[pad.profile];
 		let enable;
 		if (prof.enable) {
 			enable = new RegExp(`(${prof.enable})`, 'i');
@@ -119,7 +129,7 @@ const CUI = function() {
 			// log('controller remapping enabled for ' + sys);
 			map = {};
 			for (let i in prof.map) {
-				map[i] = gamepad.map[prof.map[i]] || prof.map[i];
+				map[i] = pad.map[prof.map[i]] || prof.map[i];
 			}
 		} else {
 			// log('no controller remapping for ' + sys);
@@ -131,15 +141,16 @@ const CUI = function() {
 		// and doAction choices consistent for certain buttons
 		if (normalize &&
 			((normalize.disable &&
-					!(new RegExp(`(${normalize.disable})`, 'i')).test(gamepad.profile)) ||
+					!(new RegExp(`(${normalize.disable})`, 'i')).test(pad.profile)) ||
 				(normalize.enable &&
-					(new RegExp(`(${normalize.enable})`, 'i')).test(gamepad.profile))
+					(new RegExp(`(${normalize.enable})`, 'i')).test(pad.profile))
 			)) {
 			for (let i in normalize.map) {
-				map[i] = gamepad.map[normalize.map[i]] || normalize.map[i];
+				map[i] = pad.map[normalize.map[i]] || normalize.map[i];
 			}
 		}
 	}
+	this.mapButtons = mapButtons;
 
 	let customActions = () => {};
 	let doAction = (act) => {
@@ -529,23 +540,12 @@ const CUI = function() {
 		}
 	}
 	this.buttonHeld = buttonHeld;
-
-	async function loop() {
-		if (gamepadConnected || gamepad.isConnected()) {
-			if (!gamepadConnected) {
-				uiOnChange(ui, uiSub, true);
-				$('html').addClass('cui-gamepadConnected');
-			}
-			await this.parseBtns(btns);
-			let vectL = gamepad.stick('left').query();
-			this.stick(vectL, 'left');
-			let vectR = gamepad.stick('right').query();
-			this.stick(vectR, 'right');
+	async function parseBtns(btns) {
+		if (!gamepadConnected) {
+			uiOnChange(ui, uiSub, true);
+			$('html').addClass('cui-gamepadConnected');
 			gamepadConnected = true;
 		}
-		requestAnimationFrame(loop);
-	}
-	this.parseBtns = async function(btns) {
 		for (let i in btns) {
 			let btn = btns[i];
 			// incomplete maps are okay
@@ -583,39 +583,85 @@ const CUI = function() {
 			await buttonPressed(i);
 		}
 	}
-	this.axes = function(vect, axe) {
-		axe = axe || 'left';
-		if (axe == 'left') {
-			if (vect.y < -.5) {
-				if (stickNue.y) move('up');
-				stickNue.y = false;
+
+	function sticks(stks) {
+		let didMove = false;
+		let vect = stks.left;
+		if (vect.y < -.5) {
+			if (stickNue.y) move('up');
+			stickNue.y = false;
+		}
+		if (vect.y > .5) {
+			if (stickNue.y) move('down');
+			stickNue.y = false;
+		}
+		if (vect.x < -.5) {
+			if (stickNue.x) move('left');
+			stickNue.x = false;
+		}
+		if (vect.x > .5) {
+			if (stickNue.x) move('right');
+			stickNue.x = false;
+		}
+		if (vect.x < .5 &&
+			vect.x > -.5) {
+			stickNue.x = true;
+		}
+		if (vect.y < .5 &&
+			vect.y > -.5) {
+			stickNue.y = true;
+		}
+	}
+
+	async function parse(btns, stks, trigs, type) {
+		if (type && gamepadType != type) {
+			let res = false;
+			for (let i in btns) {
+				let btn = btns[i];
+				let val;
+				if (typeof btn == 'boolean') {
+					val = btn;
+				} else {
+					val = btn.query();
+				}
+				if (val) {
+					res = true;
+				}
 			}
-			if (vect.y > .5) {
-				if (stickNue.y) move('down');
-				stickNue.y = false;
-			}
-			if (vect.x < -.5) {
-				if (stickNue.x) move('left');
-				stickNue.x = false;
-			}
-			if (vect.x > .5) {
-				if (stickNue.x) move('right');
-				stickNue.x = false;
-			}
-			if (vect.x < .5 &&
-				vect.x > -.5) {
-				stickNue.x = true;
-			}
-			if (vect.y < .5 &&
-				vect.y > -.5) {
-				stickNue.y = true;
+			if (res) {
+				gamepadType = type;
+				mapButtons();
+			} else {
+				return;
 			}
 		}
-	};
-	this.stick = this.axes;
+
+		await parseBtns(btns);
+		sticks(stks);
+	}
+	this.parse = parse;
+
+	async function loop() {
+		if (gamepadConnected || gamepad.isConnected()) {
+			let stks = {
+				left: gamepad.stick('left').query(),
+				right: gamepad.stick('right').query()
+			};
+			let trigs;
+			await parse(btns, stks, trigs, 'default');
+		}
+		requestAnimationFrame(loop);
+	}
 
 	this.start = function(options) {
 		opt = options || {};
+		if (opt.gca) {
+			try {
+				require('./gca.js')();
+			} catch (ror) {
+				er(ror);
+			}
+		}
 		$('.uie').off('click').click(uieClicked);
 		$('.uie').off('hover').hover(uieHovered);
 		loop();
