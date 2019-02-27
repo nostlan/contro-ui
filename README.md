@@ -1,3 +1,4 @@
 # contro-ui
 
-requires jQuery
+requires jQuery and Mousetrap
+optionally uses gca-js
