@@ -40,7 +40,7 @@
     "v": "npm version patch --force",
     "version": "git add -A",
     "postversion": "git push",
-    "V": "npm run v | git remote | xargs -L1 git push --all && git push --tags && npm publish"
+    "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "1.0.6"
+  "version": "1.0.7"
 }
