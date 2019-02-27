@@ -147,14 +147,14 @@ const CUI = function() {
 			if (uiPrev) {
 				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
 					if (!(/menu/i).test(uiPrevStates[i]) && ui != uiPrevStates[i]) {
-						this.uiStateChange(uiPrevStates[i]);
+						this.change(uiPrevStates[i]);
 						break;
 					}
 				}
 			} else {
 				for (let state of uiPrevStates) {
 					if ((/main/i).test(state)) {
-						this.uiStateChange(state);
+						this.change(state);
 						break;
 					}
 				}
@@ -295,14 +295,14 @@ const CUI = function() {
 	this.removeView = removeView;
 
 	let uiOnChange = () => {
-		log('set custom ui state change with the setUIStateChange method');
+		log('set custom ui state change with the setchange method');
 	};
 
 	this.setUIOnChange = function(func) {
 		uiOnChange = func;
 	};
 
-	function uiStateChange(state, subState, opt) {
+	function change(state, subState, opt) {
 		opt = opt || {};
 		if (state == ui) {
 			log('b ' + state);
@@ -360,7 +360,7 @@ const CUI = function() {
 			log('ui state changed from ' + uiPrev + ' to ' + state);
 		}
 	}
-	this.uiStateChange = uiStateChange;
+	this.change = change;
 
 	function uieClicked() {
 		let classes = $(this).attr('class').split(' ');
@@ -620,6 +620,19 @@ const CUI = function() {
 		});
 	}
 
+	this.bind = function(keys, act) {
+		Mousetrap.bind(keys, function() {
+			cui.doAction(act);
+			return false;
+		});
+	}
+
+	this.click = function(elem, act) {
+		$(elem).click(function() {
+			cui.buttonPressed(act);
+		});
+	}
+
 	function error(msg) {
 		log(msg);
 		let $errMenu = $('#errMenu');
@@ -636,7 +649,7 @@ const CUI = function() {
 			$('#errMenu .uie').hover(uieHovered);
 		}
 		$('#errMenu p').text(msg);
-		this.uiStateChange('errMenu');
+		this.change('errMenu');
 	}
 	this.error = error;
 	this.err = error;
