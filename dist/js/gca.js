@@ -5,6 +5,10 @@ module.exports = function() {
 	// Get the first detected GameCube adapter.
 	var adapter = gca.getAdaptersList()[0];
 
+	if (!adapter) {
+		return;
+	}
+
 	// Start communication to the first adapter detected.
 	gca.startAdapter(adapter);
 
