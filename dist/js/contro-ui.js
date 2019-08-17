@@ -227,23 +227,21 @@ const CUI = function() {
 		}
 		pos = position;
 		time = ((time == undefined) ? 2000 : time);
-		if (time != 0) {
-			let options = {
-				duration: time,
-				fill: 'forwards',
-				easing: 'ease-out'
-			};
-			let $reels = $('.reel');
-			for (let i = 0; i < $reels.length; i++) {
-				let $reel = $reels.eq(i);
-				let attr = ($reel.hasClass('reverse')) ? 'bottom' : 'top';
-				$reel[0].animate({
-					[attr]: [$reel.css(attr), -pos + 'px']
-				}, options);
-			}
-		} else {
-			$('.reel:not(.reverse)').css('top', -pos);
-			$('.reel.reverse').css('bottom', -pos);
+		if (time == 0) {
+			time = 100;
+		}
+		let options = {
+			duration: time,
+			fill: 'forwards',
+			easing: (time == 100) ? 'ease-out' : 'ease-in-out'
+		};
+		let $reels = $('.reel');
+		for (let i = 0; i < $reels.length; i++) {
+			let $reel = $reels.eq(i);
+			let attr = ($reel.hasClass('reverse')) ? 'bottom' : 'top';
+			$reel[0].animate({
+				[attr]: [$reel.css(attr), -pos + 'px']
+			}, options);
 		}
 		log(pos);
 	}
