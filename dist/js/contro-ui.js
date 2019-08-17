@@ -51,7 +51,7 @@ const CUI = function() {
 				x: 'y',
 				y: 'x'
 			},
-			disable: 'ps|xbox|pc'
+			disable: 'ps|xbox|pc|mame'
 		},
 		Nintendo_Adaptive: {
 			map: {
@@ -60,7 +60,7 @@ const CUI = function() {
 				x: 'y',
 				y: 'x'
 			},
-			enable: 'ps|xbox|pc'
+			enable: 'ps|xbox|pc|mame'
 		},
 		Xbox_PS_Consistent: {
 			map: {
