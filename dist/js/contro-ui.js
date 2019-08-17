@@ -669,12 +669,12 @@ const CUI = function() {
 	};
 
 	this.rebind = function() {
-		$(window).bind('mousewheel', function(event) {
+		window.addEventListener('wheel', function(event) {
 			event.preventDefault();
-			if ($('.uie.selected').length) {
-				return;
-			}
-			let scrollDelta = event.originalEvent.wheelDelta;
+			event.stopPropagation();
+			if ($('.uie.selected').length) return false;
+			let scrollDelta = event.deltaY;
+			// log(event);
 			if (mouse.wheel.smooth) {
 				pos += scrollDelta * mouse.wheel.multi;
 			} else {
@@ -685,6 +685,9 @@ const CUI = function() {
 				}
 			}
 			scrollTo(pos, ((!mouse.wheel.smooth) ? 2000 : 0));
+			return false;
+		}, {
+			passive: false
 		});
 	}
 
