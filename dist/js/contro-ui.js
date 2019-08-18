@@ -173,10 +173,6 @@ const CUI = function() {
 		} else {
 			customActions(act, this.btns.includes(act));
 		}
-		if (act == 'quit') {
-			app.quit();
-			process.kill('SIGINT');
-		}
 	};
 	this.doAction = doAction;
 
@@ -327,6 +323,14 @@ const CUI = function() {
 		uiOnChange = func;
 	};
 
+	let uiAfterChange = () => {
+		log('set custom ui state change with the setchange method');
+	};
+
+	this.setUIAfterChange = function(func) {
+		uiAfterChange = func;
+	};
+
 	function change(state, subState, opt) {
 		opt = opt || {};
 		if (state == ui) {
@@ -384,6 +388,7 @@ const CUI = function() {
 		if (this.opt.v) {
 			log('ui state changed from ' + uiPrev + ' to ' + state);
 		}
+		uiAfterChange();
 	}
 	this.change = change;
 
