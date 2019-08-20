@@ -338,6 +338,7 @@ const CUI = function() {
 			doAction('b');
 			return;
 		}
+		$('#' + state).show();
 		uiOnChange(state, subState || uiSub, gamepadConnected);
 		if ((/main/gi).test(state)) {
 			if (ui == 'errMenu' || (!(/select/gi).test(ui) && !(/menu/gi).test(ui))) {
@@ -376,7 +377,6 @@ const CUI = function() {
 		} else {
 			// log('keeping prev ui in background');
 		}
-		$('#' + state).show();
 		if (ui) {
 			uiPrevStates.push(ui);
 		}
@@ -556,11 +556,6 @@ const CUI = function() {
 	}
 	this.buttonHeld = buttonHeld;
 	async function parseBtns(btns) {
-		if (!gamepadConnected) {
-			uiOnChange(ui, uiSub, true);
-			$('html').addClass('cui-gamepadConnected');
-			gamepadConnected = true;
-		}
 		for (let i in btns) {
 			let btn = btns[i];
 			// incomplete maps are okay
@@ -657,13 +652,29 @@ const CUI = function() {
 	this.parse = parse;
 
 	async function loop() {
+		let type = gamepadType;
+		if (!gamepadConnected && gamepad.isConnected()) {
+			if ((/xbox/i).test(gamepad.gamepad.id)) {
+				type = 'xbox';
+			} else if ((/(ps\d|playstation)/i).test(gamepad.gamepad.id)) {
+				type = 'ps';
+			} else if ((/(nintendo|switch|joy *con|gamecube)/i).test(gamepad.gamepad.id)) {
+				type = 'nintendo';
+			}
+			log('controller detected: ' + gamepad.gamepad.id);
+			log('using the ' + type + ' gamepad mapping profile');
+
+			uiOnChange(ui, uiSub, true);
+			$('html').addClass('cui-gamepadConnected');
+			gamepadConnected = true;
+		}
 		if (gamepadConnected || gamepad.isConnected()) {
 			let stks = {
 				left: gamepad.stick('left').query(),
 				right: gamepad.stick('right').query()
 			};
 			let trigs;
-			await parse(btns, stks, trigs, 'default');
+			await parse(btns, stks, trigs, type);
 		}
 		requestAnimationFrame(loop);
 	}
@@ -753,7 +764,7 @@ const CUI = function() {
 		// });
 	}
 
-	function error(msg) {
+	function error(msg, code) {
 		log(msg);
 		let $errMenu = $('#errMenu');
 		if (!$errMenu.length) {
@@ -768,7 +779,17 @@ const CUI = function() {
 			$('#errMenu .uie').click(uieClicked);
 			$('#errMenu .uie').hover(uieHovered);
 		}
-		$('#errMenu p').text(msg);
+		$('#errMenu h1').remove();
+		$('#errMenu p').remove();
+		let msgArr = msg.split('\n');
+		for (let i = msgArr.length - 1; i >= 0; i--) {
+			$('#errMenu').prepend(`<p>${msgArr[i]}</p>`);
+		}
+		if (code) {
+			$('#errMenu').prepend(`<h1>Error Code ${code}</h1>`);
+		} else {
+			$('#errMenu').prepend(`<h1>Error</h1>`);
+		}
 		this.change('errMenu');
 	}
 	this.error = error;
