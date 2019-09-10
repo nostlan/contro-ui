@@ -356,9 +356,10 @@ const CUI = function() {
 			}
 			makeCursor($temp, state);
 		}
+		$('body').removeClass(ui);
+		$('body').addClass(state);
 		if (subState) {
-			$('body').removeClass();
-			$('body').addClass(state);
+			$('body').removeClass(uiSub);
 			$('body').addClass(subState);
 		}
 		this.resize(true, state);
