@@ -223,9 +223,7 @@ const CUI = function() {
 		}
 		pos = position;
 		time = ((time == undefined) ? 2000 : time);
-		if (time == 0) {
-			time = 100;
-		}
+		if (time == 0) time = 100;
 		let options = {
 			duration: time,
 			fill: 'forwards',
@@ -239,17 +237,13 @@ const CUI = function() {
 				[attr]: [$reel.css(attr), -pos + 'px']
 			}, options);
 		}
-		log(pos);
+		if (opt.v) log(pos);
 	}
 	this.scrollTo = scrollTo;
 
 	function scrollToCursor(time, minDistance) {
-		if ((/menu/gi).test(ui)) {
-			return;
-		}
-		if (opt.v) {
-			log($cur);
-		}
+		if ((/menu/gi).test(ui)) return;
+		if (opt.v) log($cur);
 		let $reel = $cur.parent();
 		let position = 0;
 		for (let i = 0; i < $cur.index(); i++) {
@@ -263,13 +257,14 @@ const CUI = function() {
 			position -= $(window).height() * .5;
 		}
 		let scrollDist = Math.abs(pos - position);
-		if (minDistance == null) {
-			minDistance = .4;
+		if (minDistance == null) minDistance = .4;
+		if (scrollDist < $(window).height() * minDistance) return;
+		let sTime;
+		if (time > -1) {
+			sTime = time || 1;
+		} else {
+			sTime = ($(window).height() * 2 - $cur.height()) / 5;
 		}
-		if (scrollDist < $(window).height() * minDistance) {
-			return;
-		}
-		let sTime = ((time > -1) ? time || 1 : ($(window).height() * 2 - $cur.height()) / 5);
 		if (time == undefined && scrollDist > $cur.height() * 1.1) {
 			sTime += scrollDist;
 		}
@@ -286,15 +281,11 @@ const CUI = function() {
 	this.removeCursor = removeCursor;
 
 	function makeCursor($cursor, state) {
-		if (!$cursor) {
-			return;
-		}
+		if (!$cursor) return;
 		removeCursor();
 		$cur = $cursor;
 		$cur.addClass('cursor');
-		if (!cuis[state || ui]) {
-			cuis[state || ui] = {};
-		}
+		if (!cuis[state || ui]) cuis[state || ui] = {};
 		cuis[state || ui].$cur = $cur;
 	}
 	this.makeCursor = makeCursor;
@@ -379,9 +370,7 @@ const CUI = function() {
 		} else {
 			// log('keeping prev ui in background');
 		}
-		if (ui) {
-			uiPrevStates.push(ui);
-		}
+		if (ui) uiPrevStates.push(ui);
 		uiPrev = ui;
 		ui = state;
 		uiSub = subState || uiSub;
@@ -396,9 +385,7 @@ const CUI = function() {
 
 	function uieClicked() {
 		let classes = $(this).attr('class').split(' ');
-		if (classes.includes('uie-disabled')) {
-			return;
-		}
+		if (classes.includes('uie-disabled')) return;
 		makeCursor($(this));
 		buttonPressed('a');
 	}
@@ -453,13 +440,9 @@ const CUI = function() {
 			if (x == curX) {
 				ret.$cur = $rowY.children().eq(y);
 			} else {
-				if (!$rowX.length) {
-					return;
-				}
+				if (!$rowX.length) return;
 				ret.$rowY = $rowX.children().eq(x);
-				if (!ret.$rowY.length) {
-					return;
-				}
+				if (!ret.$rowY.length) return;
 				let curRect = $cur.get(0).getBoundingClientRect();
 				while (y < ret.$rowY.children().length && y >= 0) {
 					ret.$cur = ret.$rowY.children().eq(y);
@@ -476,11 +459,9 @@ const CUI = function() {
 				}
 			}
 		} else {
-
+			// todo
 		}
-		if (!ret.$cur.length) {
-			return;
-		}
+		if (!ret.$cur.length) return;
 		makeCursor(ret.$cur);
 		scrollToCursor();
 		return true;
@@ -516,9 +497,7 @@ const CUI = function() {
 				await doAction(lbl);
 				break;
 			default:
-				if (opt.v) {
-					log('button does nothing');
-				}
+				if (opt.v) log('button does nothing');
 				return;
 		}
 	}
@@ -550,9 +529,7 @@ const CUI = function() {
 				await doHeldAction(lbl, timeHeld);
 				break;
 			default:
-				if (opt.v) {
-					log('button does nothing');
-				}
+				if (opt.v) log('button does nothing');
 				return;
 		}
 	}
@@ -571,9 +548,7 @@ const CUI = function() {
 				query = btn.query();
 			}
 			// if button is not pressed, query is false and unchanged
-			if (!btnStates[i] && !query) {
-				continue;
-			}
+			if (!btnStates[i] && !query) continue;
 			// if button press ended query is false
 			if (!query) {
 				// log(i + ' button press end');
@@ -589,9 +564,7 @@ const CUI = function() {
 			// save button state change
 			btnStates[i] += 1;
 			// if button press just started, query is true
-			if (opt.v) {
-				log(i + ' button press start');
-			}
+			if (opt.v) log(i + ' button press start');
 			await buttonPressed(i);
 		}
 	}
