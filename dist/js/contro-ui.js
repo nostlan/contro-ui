@@ -366,14 +366,16 @@ const CUI = function() {
 			makeCursor($temp, state);
 		}
 		if (subState) {
-			$('#' + state).removeClass(uiSub || 'XXXXX');
-			$('#' + state).addClass(subState);
+			$('body').removeClass();
+			$('body').addClass(state);
+			$('body').addClass(subState);
 		}
 		this.resize(true, state);
 		if (!opt.b && !opt.keepBackground &&
 			!(/select/gi).test(state) && !(/menu/gi).test(state) || (/menu/gi).test(ui)) {
 			// $('.cui:not(.main)').hide();
 			$('#' + ui).hide();
+			$('.' + ui).hide();
 		} else {
 			// log('keeping prev ui in background');
 		}
