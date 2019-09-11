@@ -159,14 +159,20 @@ const CUI = function() {
 				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
 					if (!(/menu/i).test(uiPrevStates[i]) && ui != uiPrevStates[i]) {
 						this.change(uiPrevStates[i]);
-						break;
+						return;
+					}
+				}
+				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
+					if (ui != uiPrevStates[i]) {
+						this.change(uiPrevStates[i]);
+						return;
 					}
 				}
 			} else {
 				for (let state of uiPrevStates) {
 					if ((/main/i).test(state)) {
 						this.change(state);
-						break;
+						return;
 					}
 				}
 			}
