@@ -13,7 +13,7 @@ const CUI = function() {
 	let gamepad = new Gamepad();
 
 	let gamepadConnected = false;
-	let gamepadType = 'default';
+	this.gamepadType = 'default';
 	let btnNames = [
 		'a', 'b', 'x', 'y',
 		'up', 'down', 'left', 'right',
@@ -99,7 +99,7 @@ const CUI = function() {
 		gamepadPrefs = gPrefs || gamepadPrefs;
 		normalize = norm || normalize;
 
-		let pad = gamepadPrefs[gamepadType];
+		let pad = gamepadPrefs[this.gamepadType];
 		let prof = remappingProfiles[pad.profile];
 		let enable;
 		if (prof.enable) {
@@ -606,7 +606,7 @@ const CUI = function() {
 	}
 
 	async function parse(btns, stks, trigs, type) {
-		if (type && gamepadType != type) {
+		if (type && this.gamepadType != type) {
 			let res = false;
 			for (let i in btns) {
 				let btn = btns[i];
@@ -621,7 +621,7 @@ const CUI = function() {
 				}
 			}
 			if (res) {
-				gamepadType = type;
+				this.gamepadType = type;
 				mapButtons();
 			} else {
 				return;
@@ -634,7 +634,7 @@ const CUI = function() {
 	this.parse = parse;
 
 	async function loop() {
-		let type = gamepadType;
+		let type = this.gamepadType;
 		if (!gamepadConnected && gamepad.isConnected()) {
 			if ((/xbox/i).test(gamepad.gamepad.id)) {
 				type = 'xbox';
