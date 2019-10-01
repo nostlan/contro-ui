@@ -14,14 +14,18 @@
 	display: none;
 }
 
+.menu p,
+.menu pre {
+	margin-left: 5%;
+	margin-right: 5%;
+}
+
 .menu code,
 .menu pre {
 	font-size: 1.5vh;
 }
 
 .menu p {
-	margin-left: 5%;
-	margin-right: 5%;
 	font-size: 2vh;
 }
 
