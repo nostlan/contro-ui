@@ -451,7 +451,9 @@ const CUI = function() {
 				ret.$rowY = $rowX.children().eq(x);
 				if (!ret.$rowY.length) return;
 				let curRect = $cur.get(0).getBoundingClientRect();
-				while (y < ret.$rowY.children().length && y >= 0) {
+				let rowYLength = ret.$rowY.children().length;
+				if (y >= rowYLength) y = Math.floor(rowYLength / 2);
+				while (y < rowYLength && y >= 0) {
 					ret.$cur = ret.$rowY.children().eq(y);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
 					let diff = curRect.top - elmRect.top;
