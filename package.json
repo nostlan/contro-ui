@@ -30,10 +30,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "up-outdated": "npm install --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
-    "v": "npm version patch --force",
+    "v": "npm version patch --force && npm publish",
     "version": "git add -A",
     "postversion": "git push",
-    "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
+    "V": "npm version minor --force && npm publish"
   },
-  "version": "2.0.0"
+  "version": "2.0.1"
 }
