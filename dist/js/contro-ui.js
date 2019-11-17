@@ -1,101 +1,157 @@
-const CUI = function() {
-	let opt = this.opt = {
-		v: true
-	};
+if (!log) {
 	const log = console.log;
-	const {
-		Mouse,
-		Keyboard,
-		Gamepad,
-		or,
-		and
-	} = require('contro');
-	let gamepad = new Gamepad();
+}
+const {
+	Mouse,
+	Keyboard,
+	Gamepad,
+	or,
+	and
+} = require('contro');
+let gamepad = new Gamepad();
 
-	let gamepadConnected = false;
-	this.gamepadType = 'default';
-	let btnNames = [
-		'a', 'b', 'x', 'y',
-		'up', 'down', 'left', 'right',
-		'view', 'start'
-	];
-	this.btns = btnNames;
-	let btns = {};
-	for (let i of btnNames) {
-		btns[i] = gamepad.button(i);
-	}
-	let btnStates = {};
-	let stickNue = {
-		x: true,
-		y: true
-	};
-	let cuis = {};
-	let mouse;
-	let mouseWheelDeltaNSS;
-	let pos = 0;
-	let uiPrevStates = [];
-	let uiPrev;
-	let ui;
-	let uiSub;
-	let $cur;
-	for (let i of btnNames) {
-		btnStates[i] = false;
+if (!jQuery) {
+	console.error('contro-ui requires jquery');
+	return;
+}
+// https://stackoverflow.com/questions/4080497/how-can-i-listen-for-a-click-and-hold-in-jquery
+(function($) {
+	function startTrigger(e) {
+		var $elem = $(this);
+		$elem.data('mouseheld_timeout', setTimeout(function() {
+			$elem.trigger('mouseheld');
+		}, e.data));
 	}
 
-	let map = {};
-	const remappingProfiles = {
-		Xbox_PS_Adaptive: {
-			map: {
-				a: 'b',
-				b: 'a',
-				x: 'y',
-				y: 'x'
-			},
-			disable: 'ps|xbox|pc|mame'
-		},
-		Nintendo_Adaptive: {
-			map: {
-				a: 'b',
-				b: 'a',
-				x: 'y',
-				y: 'x'
-			},
-			enable: 'ps|xbox|pc|mame'
-		},
-		Xbox_PS_Consistent: {
-			map: {
-				a: 'b',
-				b: 'a',
-				x: 'y',
-				y: 'x'
-			}
-		},
-		Nintendo_Consistent: {
-			map: {
-				a: 'b',
-				b: 'a',
-				x: 'y',
-				y: 'x'
-			}
-		},
-		Xbox_PS_None: {
-			map: {}
-		},
-		Nintendo_None: {
-			map: {}
-		}
-	};
-	let sys = 'PC';
-	let gamepadPrefs = {
-		default: {
-			profile: 'Xbox_PS_Adaptive',
-			map: {}
-		}
-	};
-	let normalize = {};
+	function stopTrigger() {
+		var $elem = $(this);
+		clearTimeout($elem.data('mouseheld_timeout'));
+	}
 
-	function mapButtons(system, gPrefs, norm) {
-		sys = system || sys;
+	var mouseheld = $.event.special.mouseheld = {
+		setup: function(data) {
+			// the first binding of a mouseheld event on an element will trigger this
+			// lets bind our event handlers
+			var $this = $(this);
+			$this.bind('mousedown', +data || mouseheld.time, startTrigger);
+			$this.bind('mouseleave mouseup', stopTrigger);
+		},
+		teardown: function() {
+			var $this = $(this);
+			$this.unbind('mousedown', startTrigger);
+			$this.unbind('mouseleave mouseup', stopTrigger);
+		},
+		time: 750 // default to 750ms
+	};
+})(jQuery);
+
+let gamepadConnected = false;
+let btnNames = [
+	'a', 'b', 'x', 'y',
+	'up', 'down', 'left', 'right',
+	'view', 'start'
+];
+let btns = {};
+for (let i of btnNames) {
+	btns[i] = gamepad.button(i);
+}
+let btnStates = {};
+let stickNue = {
+	x: true,
+	y: true
+};
+let cuis = {};
+let mouse;
+let mouseWheelDeltaNSS;
+let pos = 0;
+let uiPrevStates = [];
+let $cur;
+for (let i of btnNames) {
+	btnStates[i] = false;
+}
+
+let map = {};
+const remappingProfiles = {
+	Xbox_PS_Adaptive: {
+		map: {
+			a: 'b',
+			b: 'a',
+			x: 'y',
+			y: 'x'
+		},
+		disable: 'ps|xbox|pc|mame'
+	},
+	Nintendo_Adaptive: {
+		map: {
+			a: 'b',
+			b: 'a',
+			x: 'y',
+			y: 'x'
+		},
+		enable: 'ps|xbox|pc|mame'
+	},
+	Xbox_PS_Consistent: {
+		map: {
+			a: 'b',
+			b: 'a',
+			x: 'y',
+			y: 'x'
+		}
+	},
+	Nintendo_Consistent: {
+		map: {
+			a: 'b',
+			b: 'a',
+			x: 'y',
+			y: 'x'
+		}
+	},
+	Xbox_PS_None: {
+		map: {}
+	},
+	Nintendo_None: {
+		map: {}
+	}
+};
+let gamepadPrefs = {
+	default: {
+		profile: 'Xbox_PS_Adaptive',
+		map: {}
+	}
+};
+let normalize = {};
+let opt = {
+	v: true
+};
+
+class CUI {
+	constructor() {
+		this.uiPrev = '';
+		this.ui = '';
+		this.uiSub = '';
+		this.gamepadType = 'default';
+		this.er = this.error;
+		this.err = this.error;
+	}
+
+	async onChange() {
+		log('override this method: onChange');
+	}
+	async afterChange() {
+		log('override this method: afterChange');
+	}
+	async onResize() {
+		log('override this method: onResize');
+	}
+	async onAction() {
+		log('override this method: onAction');
+	}
+	async onHeldAction() {
+		log('override this method: onHeldAction');
+	}
+
+	mapButtons(system, gPrefs, norm) {
+		system = system || 'PC';
 		gamepadPrefs = gPrefs || gamepadPrefs;
 		normalize = norm || normalize;
 
@@ -125,14 +181,14 @@ const CUI = function() {
 		// since A(Xbox One) auto maps to X(PS3)
 		//  Y B  ->  △ ○
 		// X A  ->  □ X
-		if ((!enable || enable.test(sys)) && (!disable || !disable.test(sys))) {
-			// log('controller remapping enabled for ' + sys);
+		if ((!enable || enable.test(system)) && (!disable || !disable.test(system))) {
+			// log('controller remapping enabled for ' + system);
 			map = {};
 			for (let i in prof.map) {
 				map[i] = pad.map[prof.map[i]] || prof.map[i];
 			}
 		} else {
-			// log('no controller remapping for ' + sys);
+			// log('no controller remapping for ' + system);
 			map = {};
 		}
 
@@ -150,20 +206,18 @@ const CUI = function() {
 			}
 		}
 	}
-	this.mapButtons = mapButtons;
 
-	let customActions = () => {};
-	let doAction = (act) => {
+	async doAction(act) {
 		if (act == 'error-okay' || act == 'back') {
-			if (uiPrev) {
+			if (this.uiPrev) {
 				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
-					if (!(/menu/i).test(uiPrevStates[i]) && ui != uiPrevStates[i]) {
+					if (!(/menu/i).test(uiPrevStates[i]) && this.ui != uiPrevStates[i]) {
 						this.change(uiPrevStates[i]);
 						return;
 					}
 				}
 				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
-					if (ui != uiPrevStates[i]) {
+					if (this.ui != uiPrevStates[i]) {
 						this.change(uiPrevStates[i]);
 						return;
 					}
@@ -177,52 +231,40 @@ const CUI = function() {
 				}
 			}
 		} else {
-			customActions(act, this.btns.includes(act));
+			if (this.onAction) {
+				await this.onAction(act, btnNames.includes(act));
+			}
 		}
-	};
-	this.doAction = doAction;
+	}
 
-	let customHeldActions = () => {};
-	let doHeldAction = (act, timeHeld) => {
-		customHeldActions(act, this.btns.includes(act), timeHeld);
-	};
-	this.doHeldAction = doHeldAction;
+	async doHeldAction(act, timeHeld) {
+		if (this.onHeldAction) {
+			await this.onHeldAction(act, btnNames.includes(act), timeHeld);
+		}
+	}
 
-	let resize = () => {
-		log('set custom resize with the setResize method');
-	};
-
-	this.setCustomActions = function(func) {
-		customActions = func;
-	};
-
-	this.setCustomHeldActions = function(func) {
-		customHeldActions = func;
-	};
-
-	this.setResize = function(func) {
-		resize = func;
-	};
-
-	this.resize = function(adjust, state) {
-		state = state || ui;
+	async resize(adjust, state) {
+		state = state || this.ui;
 		if ((/menu/gi).test(state)) {
 			let $menu = $('#' + state);
-			$menu.css('margin-top', $(window).height() * .5 - $menu.outerHeight() * .5);
+			$menu.css('margin-top',
+				$(window).height() * .5 - $menu.outerHeight() * .5);
 		}
-		resize(adjust);
+		if (this.onResize) {
+			await this.onResize(adjust);
+		}
 	}
 
-	this.getCur = function(state) {
-		return (cuis[state || ui] || {}).$cur || $('');
+	getCur(state) {
+		return (cuis[state || this.ui] || {}).$cur || $('');
 	}
 
-	this.setMouse = function(mouseInfo, delta) {
+	setMouse(mouseInfo, delta) {
 		mouse = mouseInfo;
 		mouseWheelDeltaNSS = delta;
-	};
+	}
 
-	function scrollTo(position, time) {
+	scrollTo(position, time) {
 		if (isNaN(position)) {
 			log(`pos can't be: ` + position);
 			return;
@@ -245,10 +287,9 @@ const CUI = function() {
 		}
 		if (opt.v) log(pos);
 	}
-	this.scrollTo = scrollTo;
 
-	function scrollToCursor(time, minDistance) {
-		if ((/menu/gi).test(ui)) return;
+	scrollToCursor(time, minDistance) {
+		if ((/menu/gi).test(this.ui)) return;
 		if (opt.v) log($cur);
 		let $reel = $cur.parent();
 		let position = 0;
@@ -274,80 +315,67 @@ const CUI = function() {
 		if (time == undefined && scrollDist > $cur.height() * 1.1) {
 			sTime += scrollDist;
 		}
-		scrollTo(position, sTime);
+		this.scrollTo(position, sTime);
 	}
-	this.scrollToCursor = scrollToCursor;
 
-	function removeCursor() {
+	removeCursor() {
 		if (!$cur) {
 			return;
 		}
 		$cur.removeClass('cursor');
 	}
-	this.removeCursor = removeCursor;
 
-	function makeCursor($cursor, state) {
+	makeCursor($cursor, state) {
 		if (!$cursor) return;
-		removeCursor();
+		this.removeCursor();
 		$cur = $cursor;
 		$cur.addClass('cursor');
-		if (!cuis[state || ui]) cuis[state || ui] = {};
-		cuis[state || ui].$cur = $cur;
+		if (!cuis[state || this.ui]) cuis[state || this.ui] = {};
+		cuis[state || this.ui].$cur = $cur;
 	}
-	this.makeCursor = makeCursor;
 
-	function addView(state, opt) {
-		cuis[state] = opt;
-		$(`#${state} .uie`).off('click').click(uieClicked);
-		$(`#${state} .uie`).off('hover').hover(uieHovered);
+	addView(state, options) {
+		cuis[state] = options;
+		this.addListeners('#' + state);
 	}
-	this.addView = addView;
 
-	function removeView(state) {
+	removeView(state) {
 		$('#' + state).empty();
 		if ((/main/i).test(state)) {
-			uiPrev = null;
 			this.uiPrev = null;
 		}
 	}
-	this.removeView = removeView;
 
-	let uiOnChange = () => {
-		log('set custom ui state change with the setchange method');
-	};
-
-	this.setUIOnChange = function(func) {
-		uiOnChange = func;
-	};
-
-	let uiAfterChange = () => {
-		log('set custom ui state change with the setchange method');
-	};
-
-	this.setUIAfterChange = function(func) {
-		uiAfterChange = func;
-	};
-
-	function change(state, subState, opt) {
-		opt = opt || {};
-		if (state == ui) {
+	/**
+	 * Summary.
+	 * @param {String}  state          state of the UI.
+	 * @param {String}  subState       subState of the UI.
+	 * @param {Object}  [options={}]
+	 * @param {Boolean} [options.keepBackground=false]
+	 * @return void
+	 */
+	async change(state, subState, options) {
+		options = options || {};
+		if (state == this.ui) {
 			log('b ' + state);
-			doAction('b');
+			this.doAction('b');
 			return;
 		}
 		$('#' + state).show();
-		uiOnChange(state, subState || uiSub, gamepadConnected);
+		if (this.onChange) {
+			await this.onChange(state, subState || this.uiSub, gamepadConnected);
+		}
 		if ((/main/gi).test(state)) {
-			if (ui == 'errMenu' || (!(/select/gi).test(ui) && !(/menu/gi).test(ui))) {
+			if (this.ui == 'errMenu' || (!(/select/gi).test(this.ui) && !(/menu/gi).test(this.ui))) {
 				let $mid = $('#' + state + ' .reel.r0').children();
 				$mid = $mid.eq(Math.round($mid.length * .5) - 1);
-				makeCursor($mid, state);
+				this.makeCursor($mid, state);
 			} else {
-				makeCursor(cuis[state].$cur, state);
+				this.makeCursor(cuis[state].$cur, state);
 			}
-			scrollToCursor(0, 0);
+			this.scrollToCursor(0, 0);
 		} else if ((/select/gi).test(state)) {
-			makeCursor(cuis[ui].$cur, state);
+			this.makeCursor(cuis[this.ui].$cur, state);
 		} else {
 			let $temp;
 			$temp = $(`#${state}.row-y`).eq(0).find('.uie').eq(0);
@@ -360,52 +388,53 @@ const CUI = function() {
 			if (!$temp.length) {
 				$temp = $(`#${state} .row-x`).eq(0).find('.uie').eq(0);
 			}
-			makeCursor($temp, state);
+			this.makeCursor($temp, state);
 		}
-		$('body').removeClass(ui);
+		$('body').removeClass(this.ui);
 		$('body').addClass(state);
 		if (subState) {
-			$('body').removeClass(uiSub);
+			$('body').removeClass(this.uiSub);
 			$('body').addClass(subState);
 		}
 		this.resize(true, state);
-		if (!opt.b && !opt.keepBackground &&
-			!(/select/gi).test(state) && !(/menu/gi).test(state) || (/menu/gi).test(ui)) {
+		if (this.ui && !options.b && !options.keepBackground &&
+			!(/select/gi).test(state) && !(/menu/gi).test(state) || (/menu/gi).test(this.ui)) {
 			// $('.cui:not(.main)').hide();
-			$('#' + ui).hide();
-			$('.' + ui).hide();
+			$('#' + this.ui).hide();
+			$('.' + this.ui).hide();
 		} else {
 			// log('keeping prev ui in background');
 		}
-		if (ui) uiPrevStates.push(ui);
-		uiPrev = ui;
-		ui = state;
-		uiSub = subState || uiSub;
-		this.ui = ui;
-		this.uiPrev = uiPrev;
-		if (this.opt.v) {
-			log('ui state changed from ' + uiPrev + ' to ' + state);
+		if (this.ui) uiPrevStates.push(this.ui);
+		this.uiPrev = this.ui;
+		this.ui = state;
+		this.uiSub = subState || this.uiSub;
+		if (opt.v) {
+			log('ui state changed from ' + this.uiPrev + ' to ' + state);
 		}
-		uiAfterChange();
-	}
-	this.change = change;
-
-	function uieClicked() {
-		let classes = $(this).attr('class').split(' ');
-		if (classes.includes('uie-disabled')) return;
-		makeCursor($(this));
-		buttonPressed('a');
-	}
-	this.uieClicked = uieClicked;
-
-	function uieHovered() {
-		if (!cuis[ui].hoverCurDisabled && $(this).parents('#' + ui).length) {
-			makeCursor($(this));
+		if (this.afterChange) {
+			await this.afterChange();
 		}
 	}
-	this.uieHovered = uieHovered;
 
-	async function move(direction) {
+	addListeners(id) {
+		if (!id) id = '';
+		var _this = this;
+		$(id + ' .uie').click(function() {
+			let classes = $(this).attr('class').split(' ');
+			if (classes.includes('uie-disabled')) return;
+			_this.makeCursor($(this));
+			_this.buttonPressed('a');
+		});
+		$(id + ' .uie').hover(function() {
+			if (!cuis[_this.ui].hoverCurDisabled &&
+				$(this).parents('#' + _this.ui).length) {
+				_this.makeCursor($(this));
+			}
+		});
+	}
+
+	async move(direction) {
 		let $rowX = $cur.closest('.row-x');
 		let $rowY = $cur.closest('.row-y');
 		let curX, curY;
@@ -471,13 +500,12 @@ const CUI = function() {
 			// todo
 		}
 		if (!ret.$cur.length) return;
-		makeCursor(ret.$cur);
-		scrollToCursor();
+		this.makeCursor(ret.$cur);
+		this.scrollToCursor();
 		return true;
 	}
-	this.move = move;
 
-	async function buttonPressed(btn) {
+	async buttonPressed(btn) {
 		if (typeof btn == 'string') {
 			btn = {
 				label: btn
@@ -487,32 +515,31 @@ const CUI = function() {
 		if (lbl == 'view') {
 			lbl = 'select';
 		}
-		log(ui);
+		log(this.ui);
 		switch (lbl) {
 			case 'up':
 			case 'down':
 			case 'left':
 			case 'right':
-				move(lbl);
+				this.move(lbl);
 				break;
 			case 'a':
-				await doAction($cur.attr('name') || 'a');
+				await this.doAction($cur.attr('name') || 'a');
 				break;
 			case 'b':
 			case 'x':
 			case 'y':
 			case 'select':
 			case 'start':
-				await doAction(lbl);
+				await this.doAction(lbl);
 				break;
 			default:
 				if (opt.v) log('button does nothing');
 				return;
 		}
 	}
-	this.buttonPressed = buttonPressed;
 
-	async function buttonHeld(btn, timeHeld) {
+	async buttonHeld(btn, timeHeld) {
 		if (typeof btn == 'string') {
 			btn = {
 				label: btn
@@ -524,7 +551,7 @@ const CUI = function() {
 		}
 		switch (lbl) {
 			case 'a':
-				await doHeldAction($cur.attr('name') || 'a', timeHeld);
+				await this.doHeldAction($cur.attr('name') || 'a', timeHeld);
 				break;
 			case 'up':
 			case 'down':
@@ -535,15 +562,15 @@ const CUI = function() {
 			case 'y':
 			case 'select':
 			case 'start':
-				await doHeldAction(lbl, timeHeld);
+				await this.doHeldAction(lbl, timeHeld);
 				break;
 			default:
 				if (opt.v) log('button does nothing');
 				return;
 		}
 	}
-	this.buttonHeld = buttonHeld;
-	async function parseBtns(btns) {
+
+	async parseBtns(btns) {
 		for (let i in btns) {
 			let btn = btns[i];
 			// incomplete maps are okay
@@ -567,34 +594,34 @@ const CUI = function() {
 			// if button is held, query is true and unchanged
 			if (btnStates[i] && query) {
 				btnStates[i] += 1;
-				await buttonHeld(i, btnStates[i] * 16);
+				await this.buttonHeld(i, btnStates[i] * 16);
 				continue;
 			}
 			// save button state change
 			btnStates[i] += 1;
 			// if button press just started, query is true
 			if (opt.v) log(i + ' button press start');
-			await buttonPressed(i);
+			await this.buttonPressed(i);
 		}
 	}
 
-	function sticks(stks) {
+	sticks(stks) {
 		let didMove = false;
 		let vect = stks.left;
 		if (vect.y < -.5) {
-			if (stickNue.y) move('up');
+			if (stickNue.y) this.move('up');
 			stickNue.y = false;
 		}
 		if (vect.y > .5) {
-			if (stickNue.y) move('down');
+			if (stickNue.y) this.move('down');
 			stickNue.y = false;
 		}
 		if (vect.x < -.5) {
-			if (stickNue.x) move('left');
+			if (stickNue.x) this.move('left');
 			stickNue.x = false;
 		}
 		if (vect.x > .5) {
-			if (stickNue.x) move('right');
+			if (stickNue.x) this.move('right');
 			stickNue.x = false;
 		}
 		if (vect.x < .5 &&
@@ -607,7 +634,7 @@ const CUI = function() {
 		}
 	}
 
-	async function parse(btns, stks, trigs, type) {
+	async parse(btns, stks, trigs, type) {
 		if (type && this.gamepadType != type) {
 			let res = false;
 			for (let i in btns) {
@@ -624,18 +651,17 @@ const CUI = function() {
 			}
 			if (res) {
 				this.gamepadType = type;
-				mapButtons();
+				this.mapButtons();
 			} else {
 				return;
 			}
 		}
 
-		await parseBtns(btns);
-		sticks(stks);
+		await this.parseBtns(btns);
+		this.sticks(stks);
 	}
-	this.parse = parse;
 
-	async function loop() {
+	async loop() {
 		let type = this.gamepadType;
 		if (!gamepadConnected && gamepad.isConnected()) {
 			if ((/xbox/i).test(gamepad.gamepad.id)) {
@@ -647,8 +673,9 @@ const CUI = function() {
 			}
 			log('controller detected: ' + gamepad.gamepad.id);
 			log('using the ' + type + ' gamepad mapping profile');
-
-			uiOnChange(ui, uiSub, true);
+			if (this.onChange) {
+				await this.onChange(this.ui, this.uiSub, true);
+			}
 			$('html').addClass('cui-gamepadConnected');
 			gamepadConnected = true;
 		}
@@ -658,12 +685,15 @@ const CUI = function() {
 				right: gamepad.stick('right').query()
 			};
 			let trigs;
-			await parse(btns, stks, trigs, type);
+			await this.parse(btns, stks, trigs, type);
 		}
-		requestAnimationFrame(loop);
+		var _this = this;
+		requestAnimationFrame(function() {
+			_this.loop();
+		});
 	}
 
-	this.start = function(options) {
+	start(options) {
 		opt = options || {};
 		if (opt.gca) {
 			try {
@@ -672,96 +702,63 @@ const CUI = function() {
 				er(ror);
 			}
 		}
-		// https://stackoverflow.com/questions/4080497/how-can-i-listen-for-a-click-and-hold-in-jquery
-		(function($) {
-			function startTrigger(e) {
-				var $elem = $(this);
-				$elem.data('mouseheld_timeout', setTimeout(function() {
-					$elem.trigger('mouseheld');
-				}, e.data));
-			}
-
-			function stopTrigger() {
-				var $elem = $(this);
-				clearTimeout($elem.data('mouseheld_timeout'));
-			}
-
-
-			var mouseheld = $.event.special.mouseheld = {
-				setup: function(data) {
-					// the first binding of a mouseheld event on an element will trigger this
-					// lets bind our event handlers
-					var $this = $(this);
-					$this.bind('mousedown', +data || mouseheld.time, startTrigger);
-					$this.bind('mouseleave mouseup', stopTrigger);
-				},
-				teardown: function() {
-					var $this = $(this);
-					$this.unbind('mousedown', startTrigger);
-					$this.unbind('mouseleave mouseup', stopTrigger);
-				},
-				time: 750 // default to 750ms
-			};
-		})(jQuery);
-		$('.uie').off('click').click(uieClicked);
-		$('.uie').off('hover').hover(uieHovered);
-		loop();
+		this.addListeners();
+		this.loop();
 		$(window).resize(this.resize);
 	};
 
-	this.rebind = function() {
-		window.addEventListener('wheel', function(event) {
-			event.preventDefault();
-			event.stopPropagation();
-			if ($('.uie.selected').length) return false;
-			let scrollDelta = event.deltaY;
-			// log(event);
-			if (mouse.wheel.smooth) {
-				pos += scrollDelta * mouse.wheel.multi;
-			} else {
-				if (scrollDelta < 0) {
-					pos += mouseWheelDeltaNSS;
+	bind(binding, act) {
+		if (binding == 'wheel') {
+			window.addEventListener('wheel', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				if ($('.uie.selected').length) return false;
+				let scrollDelta = event.deltaY;
+				// log(event);
+				if (mouse.wheel.smooth) {
+					pos += scrollDelta * mouse.wheel.multi;
 				} else {
-					pos -= mouseWheelDeltaNSS;
+					if (scrollDelta < 0) {
+						pos += mouseWheelDeltaNSS;
+					} else {
+						pos -= mouseWheelDeltaNSS;
+					}
 				}
-			}
-			scrollTo(pos, ((!mouse.wheel.smooth) ? 2000 : 0));
-			return false;
-		}, {
-			passive: false
-		});
+				this.scrollTo(pos, ((!mouse.wheel.smooth) ? 2000 : 0));
+				return false;
+			}, {
+				passive: false
+			});
+		} else {
+			Mousetrap.bind(binding, () => {
+				this.doAction(act);
+				return false;
+			});
+		}
 	}
 
-	this.bind = function(keys, act) {
-		Mousetrap.bind(keys, function() {
-			cui.doAction(act);
-			return false;
-		});
-	}
-
-	this.click = function(elem, act) {
-		$(elem).click(function() {
-			cui.buttonPressed(act);
+	click(elem, act) {
+		$(elem).click(() => {
+			this.buttonPressed(act);
 		});
 		// $(elem).bind('mouseheld', function(e) {
-		// 	cui.buttonHeld(act, 2000);
+		// 	this.buttonHeld(act, 2000);
 		// });
 	}
 
-	function error(msg, code) {
+	error(msg, code) {
 		log(msg);
 		let $errMenu = $('#errMenu');
 		if (!$errMenu.length) {
 			$('body').append(`
-<div class="menu" id="errMenu">
-    <div class="row-y">
-        <div class="uie" name="error-okay">Okay</div>
-    </div>
-</div>`);
+				<div class="menu" id="errMenu">
+  				<div class="row-y">
+        		<div class="uie" name="error-okay">Okay</div>
+    			</div>
+				</div>`);
 			$errMenu = $('#errMenu');
 			$errMenu.prepend(`<h1>Error</h1><p>unknown error</p>`);
-			$('#errMenu .uie').click(uieClicked);
-			$('#errMenu .uie').hover(uieHovered);
+			this.addListeners('#errMenu');
 		}
 		$('#errMenu h1').remove();
 		$('#errMenu p').remove();
@@ -776,8 +773,6 @@ const CUI = function() {
 		}
 		this.change('errMenu');
 	}
-	this.error = error;
-	this.err = error;
-	this.er = error;
-};
+}
+
 module.exports = new CUI();
