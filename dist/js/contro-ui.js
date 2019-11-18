@@ -127,6 +127,7 @@ let opt = {
 
 class CUI {
 	constructor() {
+		this.opt = {};
 		this.uiPrev = '';
 		this.ui = '';
 		this.uiSub = '';
@@ -275,12 +276,11 @@ class CUI {
 				[attr]: [$reel.css(attr), -pos + 'px']
 			}, options);
 		}
-		if (opt.v) log(pos);
 	}
 
 	scrollToCursor(time, minDistance) {
 		if ((/menu/gi).test(this.ui)) return;
-		if (opt.v) log($cur);
+		if (this.opt.v) log($cur);
 		let $reel = $cur.parent();
 		let position = 0;
 		for (let i = 0; i < $cur.index(); i++) {
@@ -347,7 +347,6 @@ class CUI {
 	async change(state, subState, options) {
 		options = options || {};
 		if (state == this.ui) {
-			log('b ' + state);
 			this.doAction('b');
 			return;
 		}
@@ -399,8 +398,8 @@ class CUI {
 		this.uiPrev = this.ui;
 		this.ui = state;
 		this.uiSub = subState || this.uiSub;
-		if (opt.v) {
-			log('ui state changed from ' + this.uiPrev + ' to ' + state);
+		if (this.opt.v) {
+			log(this.uiPrev + ' to ' + state);
 		}
 		if (this.afterChange) {
 			await this.afterChange();
@@ -505,7 +504,6 @@ class CUI {
 		if (lbl == 'view') {
 			lbl = 'select';
 		}
-		log(this.ui);
 		switch (lbl) {
 			case 'up':
 			case 'down':
@@ -524,7 +522,7 @@ class CUI {
 				await this.doAction(lbl);
 				break;
 			default:
-				if (opt.v) log('button does nothing');
+				if (this.opt.v) log('button does nothing');
 				return;
 		}
 	}
@@ -555,7 +553,7 @@ class CUI {
 				await this.doHeldAction(lbl, timeHeld);
 				break;
 			default:
-				if (opt.v) log('button does nothing');
+				if (this.opt.v) log('button does nothing');
 				return;
 		}
 	}
@@ -590,7 +588,7 @@ class CUI {
 			// save button state change
 			btnStates[i] += 1;
 			// if button press just started, query is true
-			if (opt.v) log(i + ' button press start');
+			if (this.opt.v) log(i + ' button press start');
 			await this.buttonPressed(i);
 		}
 	}
@@ -684,8 +682,8 @@ class CUI {
 	}
 
 	start(options) {
-		opt = options || {};
-		if (opt.gca) {
+		this.opt = options || {};
+		if (this.opt.gca) {
 			try {
 				require('./gca.js')();
 			} catch (ror) {
