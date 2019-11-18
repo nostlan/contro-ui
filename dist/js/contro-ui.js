@@ -65,6 +65,7 @@ let mouse;
 let mouseWheelDeltaNSS;
 let pos = 0;
 let uiPrevStates = [];
+let uiAfterError = '';
 let $cur;
 for (let i of btnNames) {
 	btnStates[i] = false;
@@ -209,25 +210,14 @@ class CUI {
 
 	async doAction(act) {
 		if (act == 'error-okay' || act == 'back') {
-			if (this.uiPrev) {
-				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
-					if (!(/menu/i).test(uiPrevStates[i]) && this.ui != uiPrevStates[i]) {
-						this.change(uiPrevStates[i]);
-						return;
-					}
-				}
-				for (let i = uiPrevStates.length - 1; i >= 0; i--) {
-					if (this.ui != uiPrevStates[i]) {
-						this.change(uiPrevStates[i]);
-						return;
-					}
-				}
-			} else {
-				for (let state of uiPrevStates) {
-					if ((/main/i).test(state)) {
-						this.change(state);
-						return;
-					}
+			if (uiAfterError) {
+				this.change(uiAfterError);
+				return;
+			}
+			for (let i = uiPrevStates.length - 1; i >= 0; i--) {
+				if (this.ui != uiPrevStates[i]) {
+					this.change(uiPrevStates[i]);
+					return;
 				}
 			}
 		} else {
@@ -746,7 +736,8 @@ class CUI {
 		// });
 	}
 
-	error(msg, code) {
+	error(msg, code, stateAfterError) {
+		uiAfterError = stateAfterError;
 		log(msg);
 		let $errMenu = $('#errMenu');
 		if (!$errMenu.length) {
