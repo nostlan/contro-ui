@@ -56,6 +56,9 @@ for (let i of btnNames) {
 	btns[i] = gamepad.button(i);
 }
 let btnStates = {};
+for (let i of btnNames) {
+	btnStates[i] = false;
+}
 let stickNue = {
 	x: true,
 	y: true
@@ -67,9 +70,6 @@ let pos = 0;
 let uiPrevStates = [];
 let uiAfterError = '';
 let $cur;
-for (let i of btnNames) {
-	btnStates[i] = false;
-}
 
 let map = {};
 const remappingProfiles = {
@@ -114,13 +114,13 @@ const remappingProfiles = {
 		map: {}
 	}
 };
-let gamepadPrefs = {
+let gamepadMaps = {
 	default: {
 		profile: 'Xbox_PS_Adaptive',
 		map: {}
 	}
 };
-let normalize = {};
+let context = 'PC';
 let opt = {
 	v: true
 };
@@ -132,6 +132,7 @@ class CUI {
 		this.ui = '';
 		this.uiSub = '';
 		this.gamepadType = 'default';
+		this.disableSticks = false;
 		this.er = this.error;
 		this.err = this.error;
 	}
@@ -152,12 +153,9 @@ class CUI {
 		log('override this method: onHeldAction');
 	}
 
-	mapButtons(system, gPrefs, norm) {
-		system = system || 'PC';
-		gamepadPrefs = gPrefs || gamepadPrefs;
-		normalize = norm || normalize;
-
-		let pad = gamepadPrefs[this.gamepadType];
+	mapButtons(system) {
+		context = system || context;
+		let pad = gamepadMaps[this.gamepadType];
 		let prof = remappingProfiles[pad.profile];
 		let enable;
 		if (prof.enable) {
@@ -183,28 +181,28 @@ class CUI {
 		// since A(Xbox One) auto maps to X(PS3)
 		//  Y B  ->  △ ○
 		// X A  ->  □ X
-		if ((!enable || enable.test(system)) && (!disable || !disable.test(system))) {
-			// log('controller remapping enabled for ' + system);
+		if ((!enable || enable.test(context)) && (!disable || !disable.test(context))) {
+			// log('controller remapping enabled for ' + context);
 			map = {};
 			for (let i in prof.map) {
 				map[i] = pad.map[prof.map[i]] || prof.map[i];
 			}
 		} else {
-			// log('no controller remapping for ' + system);
+			// log('no controller remapping for ' + context);
 			map = {};
 		}
 
 		// normalize X and Y to nintendo physical layout
 		// this will make the physical layout of an app consistent
 		// and doAction choices consistent for certain buttons
-		if (normalize &&
-			((normalize.disable &&
-					!(new RegExp(`(${normalize.disable})`, 'i')).test(pad.profile)) ||
-				(normalize.enable &&
-					(new RegExp(`(${normalize.enable})`, 'i')).test(pad.profile))
+		if (this.opt.normalize &&
+			((this.opt.normalize.disable &&
+					!(new RegExp(`(${this.opt.normalize.disable})`, 'i')).test(pad.profile)) ||
+				(this.opt.normalize.enable &&
+					(new RegExp(`(${this.opt.normalize.enable})`, 'i')).test(pad.profile))
 			)) {
-			for (let i in normalize.map) {
-				map[i] = pad.map[normalize.map[i]] || normalize.map[i];
+			for (let i in this.opt.normalize.map) {
+				map[i] = pad.map[this.opt.normalize.map[i]] || this.opt.normalize.map[i];
 			}
 		}
 	}
@@ -230,7 +228,7 @@ class CUI {
 
 	async doHeldAction(act, timeHeld) {
 		if (this.onHeldAction) {
-			await this.onHeldAction(act, btnNames.includes(act), timeHeld);
+			return await this.onHeldAction(act, btnNames.includes(act), timeHeld);
 		}
 	}
 
@@ -537,9 +535,10 @@ class CUI {
 		if (lbl == 'view') {
 			lbl = 'select';
 		}
+		let res = false;
 		switch (lbl) {
 			case 'a':
-				await this.doHeldAction($cur.attr('name') || 'a', timeHeld);
+				res = await this.doHeldAction($cur.attr('name') || 'a', timeHeld);
 				break;
 			case 'up':
 			case 'down':
@@ -550,12 +549,13 @@ class CUI {
 			case 'y':
 			case 'select':
 			case 'start':
-				await this.doHeldAction(lbl, timeHeld);
+				res = await this.doHeldAction(lbl, timeHeld);
 				break;
 			default:
 				if (this.opt.v) log('button does nothing');
 				return;
 		}
+		return res;
 	}
 
 	async parseBtns(btns) {
@@ -582,7 +582,9 @@ class CUI {
 			// if button is held, query is true and unchanged
 			if (btnStates[i] && query) {
 				btnStates[i] += 1;
-				await this.buttonHeld(i, btnStates[i] * 16);
+				if (await this.buttonHeld(i, btnStates[i] * 16)) {
+					btnStates[i] = 0;
+				}
 				continue;
 			}
 			// save button state change
@@ -594,6 +596,7 @@ class CUI {
 	}
 
 	sticks(stks) {
+		if (this.disableSticks) return;
 		let didMove = false;
 		let vect = stks.left;
 		if (vect.y < -.5) {
@@ -683,6 +686,7 @@ class CUI {
 
 	start(options) {
 		this.opt = options || {};
+		gamepadMaps = this.opt.gamepadMaps || gamepadMaps;
 		if (this.opt.gca) {
 			try {
 				require('./gca.js')();
