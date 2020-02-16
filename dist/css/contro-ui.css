@@ -14,10 +14,17 @@
 	display: none;
 }
 
+.menu input,
 .menu p,
-.menu pre {
+.menu pre,
+.menu ul {
 	margin-left: 5%;
 	margin-right: 5%;
+}
+
+.menu input {
+	width: 90%;
+	margin-bottom: 3%;
 }
 
 .menu code,
@@ -25,7 +32,9 @@
 	font-size: 1.5vh;
 }
 
-.menu p {
+.menu input,
+.menu p,
+.menu ul {
 	font-size: 2vh;
 }
 
