@@ -35,5 +35,5 @@
     "postversion": "git push",
     "V": "npm version minor --force && npm publish"
   },
-  "version": "2.0.5"
+  "version": "2.0.6"
 }

@@ -45,7 +45,6 @@ if (!jQuery) {
 	};
 })(jQuery);
 
-let gamepadConnected = false;
 let btnNames = [
 	'a', 'b', 'x', 'y',
 	'up', 'down', 'left', 'right',
@@ -131,6 +130,7 @@ class CUI {
 		this.uiPrev = '';
 		this.ui = '';
 		this.uiSub = '';
+		this.gamepadConnected = false;
 		this.gamepadType = 'default';
 		this.disableSticks = false;
 		this.er = this.error;
@@ -350,7 +350,7 @@ class CUI {
 		}
 		$('#' + state).show();
 		if (this.onChange) {
-			await this.onChange(state, subState || this.uiSub, gamepadConnected);
+			await this.onChange(state, subState || this.uiSub, this.gamepadConnected);
 		}
 		if ((/main/gi).test(state)) {
 			if (this.ui == 'errMenu' || (!(/select/gi).test(this.ui) && !(/menu/gi).test(this.ui))) {
@@ -424,14 +424,18 @@ class CUI {
 	async move(direction) {
 		let $rowX = $cur.closest('.row-x');
 		let $rowY = $cur.closest('.row-y');
-		let curX, curY;
+		let curX, curY, maxX, maxY;
 		let inVerticalRow = $rowX.has($rowY.get(0)).length || !$rowX.length;
 		if (inVerticalRow) {
-			curX = $rowY.index(); // index of rowY in rowX
-			curY = $cur.index();
+			curX = $rowX.find('.row-y').index($rowY);
+			maxX = $rowX.find('.row-y').length;
+			curY = $rowY.find('.uie').index($cur);
+			maxY = $rowY.find('.uie').length;
 		} else {
-			curX = $cur.index();
-			curY = $rowX.index(); // index of rowX in rowY
+			curX = $rowX.find('.uie').index($cur);
+			maxX = $rowX.find('.uie').length;
+			curY = $rowY.find('.row-x').index($rowX);
+			maxY = $rowY.find('.row-x').length;
 		}
 		let x = curX;
 		let y = curY;
@@ -449,28 +453,28 @@ class CUI {
 				x += 1;
 				break;
 			default:
-
 		}
 		let ret = {
 			$cur: $cur,
 			$rowX: $rowX,
 			$rowY: $rowY
 		};
-		if (x < 0 || y < 0) {
-			return;
-		}
+		if (x < 0) x = maxX - 1;
+		if (y < 0) y = maxY - 1;
+		if (x >= maxX) x = 0;
+		if (y >= maxY) y = 0;
 		if (inVerticalRow) {
 			if (x == curX) {
-				ret.$cur = $rowY.children().eq(y);
+				ret.$cur = $rowY.find('.uie').eq(y);
 			} else {
 				if (!$rowX.length) return;
-				ret.$rowY = $rowX.children().eq(x);
+				ret.$rowY = $rowX.find('.row-y').eq(x);
 				if (!ret.$rowY.length) return;
 				let curRect = $cur.get(0).getBoundingClientRect();
-				let rowYLength = ret.$rowY.children().length;
+				let rowYLength = ret.$rowY.find('.uie').length;
 				if (y >= rowYLength) y = Math.floor(rowYLength / 2);
 				while (y < rowYLength && y >= 0) {
-					ret.$cur = ret.$rowY.children().eq(y);
+					ret.$cur = ret.$rowY.find('.uie').eq(y);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
 					let diff = curRect.top - elmRect.top;
 					let halfHeight = Math.max($cur.height(), ret.$cur.height()) * .6;
@@ -484,7 +488,29 @@ class CUI {
 				}
 			}
 		} else {
-			// todo
+			if (y == curY) {
+				ret.$cur = $rowX.find('.uie').eq(x);
+			} else {
+				if (!$rowY.length) return;
+				ret.$rowX = $rowY.find('.row-x').eq(y);
+				if (!ret.$rowX.length) return;
+				let curRect = $cur.get(0).getBoundingClientRect();
+				let rowXLength = ret.$rowX.find('.uie').length;
+				if (x >= rowXLength) x = Math.floor(rowXLength / 2);
+				while (x < rowXLength && x >= 0) {
+					ret.$cur = ret.$rowX.find('.uie').eq(x);
+					let elmRect = ret.$cur.get(0).getBoundingClientRect();
+					let diff = curRect.left - elmRect.left;
+					let halfWidth = Math.max($cur.width(), ret.$cur.width()) * .6;
+					if (halfWidth < diff) {
+						x++;
+					} else if (-halfWidth > diff) {
+						x--;
+					} else {
+						break;
+					}
+				}
+			}
 		}
 		if (!ret.$cur.length) return;
 		this.makeCursor(ret.$cur);
@@ -510,6 +536,7 @@ class CUI {
 				this.move(lbl);
 				break;
 			case 'a':
+			case 'enter':
 				await this.doAction($cur.attr('name') || 'a');
 				break;
 			case 'b':
@@ -538,6 +565,7 @@ class CUI {
 		let res = false;
 		switch (lbl) {
 			case 'a':
+			case 'enter':
 				res = await this.doHeldAction($cur.attr('name') || 'a', timeHeld);
 				break;
 			case 'up':
@@ -654,7 +682,7 @@ class CUI {
 
 	async loop() {
 		let type = this.gamepadType;
-		if (!gamepadConnected && gamepad.isConnected()) {
+		if (!this.gamepadConnected && gamepad.isConnected()) {
 			if ((/xbox/i).test(gamepad.gamepad.id)) {
 				type = 'xbox';
 			} else if ((/(ps\d|playstation)/i).test(gamepad.gamepad.id)) {
@@ -667,10 +695,10 @@ class CUI {
 			if (this.onChange) {
 				await this.onChange(this.ui, this.uiSub, true);
 			}
-			$('html').addClass('cui-gamepadConnected');
-			gamepadConnected = true;
+			$('html').addClass('cui-this.gamepadConnected');
+			this.gamepadConnected = true;
 		}
-		if (gamepadConnected || gamepad.isConnected()) {
+		if (this.gamepadConnected || gamepad.isConnected()) {
 			let stks = {
 				left: gamepad.stick('left').query(),
 				right: gamepad.stick('right').query()
@@ -723,7 +751,11 @@ class CUI {
 			});
 		} else {
 			Mousetrap.bind(binding, () => {
-				this.doAction(act);
+				if (/(up|down|left|right)/.test(act)) {
+					this.move(act);
+				} else {
+					this.doAction(act);
+				}
 				return false;
 			});
 		}

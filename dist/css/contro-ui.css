@@ -6,8 +6,7 @@
 	position: fixed;
 	z-index: 100;
 	width: 50vw;
-	padding-top: 2vh;
-	padding-bottom: 2vh;
+	padding: 15px 10px;
 	margin-left: 25vw;
 	margin-top: 5vh;
 	text-align: left;
@@ -52,6 +51,35 @@
 	font-size: 4vh;
 	border-radius: 10px;
 	box-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, .5);
+}
+
+.menu .row-x {
+	margin: 0;
+}
+
+.menu .row-x .uie,
+.menu .row-x:last-child,
+.menu .uie:last-child {
+	margin-bottom: 0;
+}
+
+.menu .row-x {
+	margin-bottom: 10px;
+}
+
+.menu .row-x .uie {
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.menu .row-x .uie:last-child {
+	margin-left: 5px;
+	margin-right: 0;
+}
+
+.menu .row-x .uie:first-child {
+	margin-left: 0;
+	margin-right: 5px;
 }
 
 .menu .cursor {
