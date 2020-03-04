@@ -261,24 +261,19 @@ class CUI {
 		pos = position;
 		log(pos.toFixed(1));
 		time = ((time == undefined) ? 2000 : time);
-		let options = {
-			duration: time,
-			fill: 'forwards',
-			easing: 'ease-in-out'
-		};
 		let $reels = $('.reel');
 		for (let i = 0; i < $reels.length; i++) {
 			let $reel = $reels.eq(i);
 			let reelPos = pos;
 			if (i % 2 == 0) { // is reverse
 				reelPos = $reel[0].scrollHeight * .5 - pos;
+				reelPos += $(window).height();
 			}
 
 			if (time != 0) {
-				// 				$reel[0].animate({
-				// 					['scrollTop']: pos + 'px'
-				// 				}, options);
-				$reel[0].scrollTop = reelPos;
+				$reel.stop().animate({
+					scrollTop: reelPos
+				}, time, 'swing');
 			} else {
 				$reel[0].scrollTop = reelPos;
 			}
@@ -296,7 +291,7 @@ class CUI {
 		position += $cur.height() * .5;
 		if ($reel.hasClass('reverse')) {
 			position = $reel[0].scrollHeight * .5 - position;
-			position += $(window).height() * .5;
+			position += $(window).height() * 1.5;
 		} else {
 			position -= $(window).height() * .5;
 		}
@@ -753,7 +748,7 @@ class CUI {
 						pos -= mouseWheelDeltaNSS;
 					}
 				}
-				this.scrollTo(pos, ((!mouse.wheel.smooth) ? 2000 : 0));
+				this.scrollTo(pos, ((!mouse.wheel.smooth) ? 1500 : 0));
 				return false;
 			}, {
 				passive: false
