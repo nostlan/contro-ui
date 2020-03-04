@@ -259,20 +259,29 @@ class CUI {
 			return;
 		}
 		pos = position;
+		log(pos.toFixed(1));
 		time = ((time == undefined) ? 2000 : time);
-		if (time == 0) time = 100;
 		let options = {
 			duration: time,
 			fill: 'forwards',
-			easing: (time == 100) ? 'ease-out' : 'ease-in-out'
+			easing: 'ease-in-out'
 		};
 		let $reels = $('.reel');
 		for (let i = 0; i < $reels.length; i++) {
 			let $reel = $reels.eq(i);
-			let attr = ($reel.hasClass('reverse')) ? 'bottom' : 'top';
-			$reel[0].animate({
-				[attr]: [$reel.css(attr), -pos + 'px']
-			}, options);
+			let reelPos = pos;
+			if (i % 2 == 0) { // is reverse
+				reelPos = $reel[0].scrollHeight * .5 - pos;
+			}
+
+			if (time != 0) {
+				// 				$reel[0].animate({
+				// 					['scrollTop']: pos + 'px'
+				// 				}, options);
+				$reel[0].scrollTop = reelPos;
+			} else {
+				$reel[0].scrollTop = reelPos;
+			}
 		}
 	}
 
@@ -286,8 +295,8 @@ class CUI {
 		}
 		position += $cur.height() * .5;
 		if ($reel.hasClass('reverse')) {
+			position = $reel[0].scrollHeight * .5 - position;
 			position += $(window).height() * .5;
-			position = $reel.height() - position;
 		} else {
 			position -= $(window).height() * .5;
 		}
