@@ -209,13 +209,17 @@ class CUI {
 
 	async doAction(act) {
 		if (act == 'error-okay' || act == 'back') {
+			if (uiAfterError == 'quit') {
+				this.doAction('quit');
+				return;
+			}
 			if (uiAfterError) {
-				this.change(uiAfterError);
+				await this.change(uiAfterError);
 				return;
 			}
 			for (let i = uiPrevStates.length - 1; i >= 0; i--) {
 				if (this.ui != uiPrevStates[i]) {
-					this.change(uiPrevStates[i]);
+					await this.change(uiPrevStates[i]);
 					return;
 				}
 			}
@@ -774,7 +778,7 @@ class CUI {
 		// });
 	}
 
-	error(msg, code, stateAfterError) {
+	async error(msg, code, stateAfterError) {
 		uiAfterError = stateAfterError;
 		log(msg);
 		let $errMenu = $('#errMenu');
@@ -800,7 +804,11 @@ class CUI {
 		} else {
 			$('#errMenu').prepend(`<h1>Error</h1>`);
 		}
-		this.change('errMenu');
+		await this.change('errMenu');
+		if (stateAfterError == 'quit') {
+			// stop
+			await delay(100000000000);
+		}
 	}
 }
 
