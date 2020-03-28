@@ -217,11 +217,24 @@ class CUI {
 				await this.change(uiAfterError);
 				return;
 			}
+			let curLevel = this.ui.split('_');
+			if (curLevel.length > 1) {
+				curLevel = Number(curLevel[1]);
+			} else {
+				curLevel = 0;
+			}
 			for (let i = uiPrevStates.length - 1; i >= 0; i--) {
-				if (this.ui != uiPrevStates[i]) {
-					await this.change(uiPrevStates[i]);
-					return;
+				if (this.ui == uiPrevStates[i]) continue;
+
+				let prevLevel = uiPrevStates[i].split('_');
+				if (prevLevel.length > 1) {
+					prevLevel = Number(prevLevel[1]);
+				} else {
+					prevLevel = 0;
 				}
+				if (prevLevel > curLevel) continue;
+				await this.change(uiPrevStates[i]);
+				return;
 			}
 		} else {
 			if (this.onAction) {
@@ -263,7 +276,7 @@ class CUI {
 			return;
 		}
 		pos = position;
-		log(pos.toFixed(1));
+		// if (this.opt.v) log(pos.toFixed(1));
 		time = ((time == undefined) ? 2000 : time);
 		let $reels = $('.reel');
 		for (let i = 0; i < $reels.length; i++) {
@@ -271,7 +284,6 @@ class CUI {
 			let reelPos = pos;
 			if (i % 2 == 0) { // is reverse
 				reelPos = $reel[0].scrollHeight * .5 - pos;
-				reelPos += $(window).height();
 			}
 
 			if (time != 0) {
@@ -295,7 +307,7 @@ class CUI {
 		position += $cur.height() * .5;
 		if ($reel.hasClass('reverse')) {
 			position = $reel[0].scrollHeight * .5 - position;
-			position += $(window).height() * 1.5;
+			position += $(window).height() * .5;
 		} else {
 			position -= $(window).height() * .5;
 		}
@@ -430,6 +442,7 @@ class CUI {
 	}
 
 	async move(direction) {
+		document.body.requestPointerLock();
 		let $rowX = $cur.closest('.row-x');
 		let $rowY = $cur.closest('.row-y');
 		let curX, curY, maxX, maxY;
