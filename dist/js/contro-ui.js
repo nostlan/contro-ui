@@ -138,19 +138,22 @@ class CUI {
 	}
 
 	async onChange() {
-		log('override this method: onChange');
+		log('override this method: cui.onChange');
 	}
 	async afterChange() {
-		log('override this method: afterChange');
+		log('override this method: cui.afterChange');
 	}
 	async onResize() {
-		log('override this method: onResize');
+		log('override this method: cui.onResize');
 	}
 	async onAction() {
-		log('override this method: onAction');
+		log('override this method: cui.onAction');
 	}
 	async onHeldAction() {
-		log('override this method: onHeldAction');
+		log('override this method: cui.onHeldAction');
+	}
+	async afterMove() {
+		log('override this method: cui.afterMove');
 	}
 
 	mapButtons(system) {
@@ -297,7 +300,8 @@ class CUI {
 	}
 
 	scrollToCursor(time, minDistance) {
-		if ((/menu/gi).test(this.ui)) return;
+		// old behavior
+		// if ((/menu/gi).test(this.ui)) return;
 		if (this.opt.v) log($cur);
 		let $reel = $cur.parent();
 		let position = 0;
@@ -313,15 +317,13 @@ class CUI {
 		}
 		let scrollDist = Math.abs(pos - position);
 		if (minDistance == null) minDistance = .4;
-		if (scrollDist < $(window).height() * minDistance) return;
+		if (!(/select/i).test(this.ui) &&
+			scrollDist < $(window).height() * minDistance) return;
 		let sTime;
 		if (time > -1) {
 			sTime = time || 1;
 		} else {
 			sTime = ($(window).height() * 2 - $cur.height()) / 5;
-		}
-		if (time == undefined && scrollDist > $cur.height() * 1.1) {
-			sTime += scrollDist;
 		}
 		this.scrollTo(position, sTime);
 	}
@@ -494,6 +496,7 @@ class CUI {
 				let curRect = $cur.get(0).getBoundingClientRect();
 				let rowYLength = ret.$rowY.find('.uie').length;
 				if (y >= rowYLength) y = Math.floor(rowYLength / 2);
+				let direction = -1;
 				while (y < rowYLength && y >= 0) {
 					ret.$cur = ret.$rowY.find('.uie').eq(y);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
@@ -501,8 +504,12 @@ class CUI {
 					let halfHeight = Math.max($cur.height(), ret.$cur.height()) * .6;
 					if (halfHeight < diff) {
 						y++;
+						if (direction == 1) break;
+						direction = 0;
 					} else if (-halfHeight > diff) {
 						y--;
+						if (direction == 0) break;
+						direction = 1;
 					} else {
 						break;
 					}
@@ -536,6 +543,9 @@ class CUI {
 		if (!ret.$cur.length) return;
 		this.makeCursor(ret.$cur);
 		this.scrollToCursor();
+		if (this.afterMove) {
+			await this.afterMove();
+		}
 		return true;
 	}
 
