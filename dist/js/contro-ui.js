@@ -375,6 +375,8 @@ class CUI {
 			this.doAction('b');
 			return;
 		}
+		if (this.ui) uiPrevStates.push(this.ui);
+		this.uiPrev = this.ui;
 		$('#' + state).show();
 		if (this.onChange) {
 			await this.onChange(state, subState || this.uiSub, this.gamepadConnected);
@@ -419,8 +421,6 @@ class CUI {
 		} else {
 			// log('keeping prev ui in background');
 		}
-		if (this.ui) uiPrevStates.push(this.ui);
-		this.uiPrev = this.ui;
 		this.ui = state;
 		this.uiSub = subState || this.uiSub;
 		if (this.opt.v) {
