@@ -210,6 +210,31 @@ class CUI {
 		}
 	}
 
+	getLevel(ui) {
+		let level = ui.split('_');
+		if (level.length > 1) {
+			level = Number(level[1]);
+		} else {
+			level = 0;
+		}
+		return level;
+	}
+
+	isParent(ui, state) {
+		return this.getLevel(ui) < this.getLevel(state);
+	}
+
+	getParent(ui) {
+		ui = (ui) ? ui : this.ui;
+		let curLevel = this.getLevel(ui);
+		for (let i = uiPrevStates.length - 1; i >= 0; i--) {
+			if (ui == uiPrevStates[i]) continue;
+			let prevLevel = this.getLevel(uiPrevStates[i]);
+			if (prevLevel > curLevel) continue;
+			return uiPrevStates[i];
+		}
+	}
+
 	async doAction(act) {
 		if (act == 'error-okay' || act == 'back') {
 			if (uiAfterError == 'quit') {
@@ -220,29 +245,9 @@ class CUI {
 				await this.change(uiAfterError);
 				return;
 			}
-			let curLevel = this.ui.split('_');
-			if (curLevel.length > 1) {
-				curLevel = Number(curLevel[1]);
-			} else {
-				curLevel = 0;
-			}
-			for (let i = uiPrevStates.length - 1; i >= 0; i--) {
-				if (this.ui == uiPrevStates[i]) continue;
-
-				let prevLevel = uiPrevStates[i].split('_');
-				if (prevLevel.length > 1) {
-					prevLevel = Number(prevLevel[1]);
-				} else {
-					prevLevel = 0;
-				}
-				if (prevLevel > curLevel) continue;
-				await this.change(uiPrevStates[i]);
-				return;
-			}
-		} else {
-			if (this.onAction) {
-				await this.onAction(act, btnNames.includes(act));
-			}
+			await this.change(this.getParent());
+		} else if (this.onAction) {
+			await this.onAction(act, btnNames.includes(act));
 		}
 	}
 
@@ -254,7 +259,7 @@ class CUI {
 
 	async resize(adjust, state) {
 		state = state || this.ui;
-		if ((/menu/gi).test(state)) {
+		if ((/menu|select/i).test(state)) {
 			let $menu = $('#' + state);
 			$menu.css('margin-top',
 				$(window).height() * .5 - $menu.outerHeight() * .5);
@@ -301,7 +306,7 @@ class CUI {
 
 	scrollToCursor(time, minDistance) {
 		// old behavior
-		// if ((/menu/gi).test(this.ui)) return;
+		// if (/menu|select/i.test(this.ui)) return;
 		if (this.opt.v) log($cur);
 		let $reel = $cur.parent();
 		let position = 0;
@@ -375,7 +380,7 @@ class CUI {
 			await this.onChange(state, subState || this.uiSub, this.gamepadConnected);
 		}
 		if ((/main/gi).test(state)) {
-			if (this.ui == 'errMenu' || (!(/select/gi).test(this.ui) && !(/menu/gi).test(this.ui))) {
+			if (this.ui == 'errMenu' || !/menu|select/i.test(this.ui)) {
 				let $mid = $('#' + state + ' .reel.r0').children();
 				$mid = $mid.eq(Math.round($mid.length * .5) - 1);
 				this.makeCursor($mid, state);
@@ -383,8 +388,8 @@ class CUI {
 				this.makeCursor(cuis[state].$cur, state);
 			}
 			this.scrollToCursor(0, 0);
-		} else if ((/select/gi).test(state)) {
-			this.makeCursor(cuis[this.ui].$cur, state);
+		} else if (/select/i.test(state)) {
+			this.makeCursor(cuis[this.getParent(state)].$cur, state);
 		} else {
 			let $temp;
 			$temp = $(`#${state}.row-y`).eq(0).find('.uie').eq(0);
@@ -407,7 +412,7 @@ class CUI {
 		}
 		this.resize(true, state);
 		if (this.ui && !options.b && !options.keepBackground &&
-			!(/select/gi).test(state) && !(/menu/gi).test(state) || (/menu/gi).test(this.ui)) {
+			/menu/i.test(this.ui) && !this.isParent(this.ui, state)) {
 			// $('.cui:not(.main)').hide();
 			$('#' + this.ui).hide();
 			$('.' + this.ui).hide();
@@ -486,6 +491,17 @@ class CUI {
 		if (y < 0) y = maxY - 1;
 		if (x >= maxX) x = 0;
 		if (y >= maxY) y = 0;
+		// find scale if menu is scaled
+		let scale;
+		let transform = $cur.parent().parent().css('transform');
+		if (transform) {
+			let matches = transform.match(/scale\(([\d\.]+)/);
+			if (!matches) matches = transform.match(/matrix\(([\d\.]+)/);
+			if (matches) {
+				scale = Number(matches[1]); // divide by scale
+			}
+		}
+		if (!scale) scale = 1;
 		if (inVerticalRow) {
 			if (x == curX) {
 				ret.$cur = $rowY.find('.uie').eq(y);
@@ -496,20 +512,15 @@ class CUI {
 				let curRect = $cur.get(0).getBoundingClientRect();
 				let rowYLength = ret.$rowY.find('.uie').length;
 				if (y >= rowYLength) y = Math.floor(rowYLength / 2);
-				let direction = -1;
 				while (y < rowYLength && y >= 0) {
 					ret.$cur = ret.$rowY.find('.uie').eq(y);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
-					let diff = curRect.top - elmRect.top;
+					let diff = (curRect.top - elmRect.top) / scale;
 					let halfHeight = Math.max($cur.height(), ret.$cur.height()) * .6;
 					if (halfHeight < diff) {
 						y++;
-						if (direction == 1) break;
-						direction = 0;
 					} else if (-halfHeight > diff) {
 						y--;
-						if (direction == 0) break;
-						direction = 1;
 					} else {
 						break;
 					}
@@ -528,7 +539,7 @@ class CUI {
 				while (x < rowXLength && x >= 0) {
 					ret.$cur = ret.$rowX.find('.uie').eq(x);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
-					let diff = curRect.left - elmRect.left;
+					let diff = (curRect.left - elmRect.left) / scale;
 					let halfWidth = Math.max($cur.width(), ret.$cur.width()) * .6;
 					if (halfWidth < diff) {
 						x++;
@@ -661,26 +672,20 @@ class CUI {
 		if (vect.y < -.5) {
 			if (stickNue.y) this.move('up');
 			stickNue.y = false;
-		}
-		if (vect.y > .5) {
+		} else if (vect.y > .5) {
 			if (stickNue.y) this.move('down');
 			stickNue.y = false;
+		} else {
+			stickNue.y = true;
 		}
 		if (vect.x < -.5) {
 			if (stickNue.x) this.move('left');
 			stickNue.x = false;
-		}
-		if (vect.x > .5) {
+		} else if (vect.x > .5) {
 			if (stickNue.x) this.move('right');
 			stickNue.x = false;
-		}
-		if (vect.x < .5 &&
-			vect.x > -.5) {
+		} else {
 			stickNue.x = true;
-		}
-		if (vect.y < .5 &&
-			vect.y > -.5) {
-			stickNue.y = true;
 		}
 	}
 
@@ -802,6 +807,7 @@ class CUI {
 	}
 
 	async error(msg, code, stateAfterError) {
+		if (typeof msg != 'string') return;
 		uiAfterError = stateAfterError;
 		log(msg);
 		let $errMenu = $('#errMenu');
