@@ -354,6 +354,10 @@ class CUI {
 		this.addListeners('#' + state);
 	}
 
+	editView(state, options) {
+		cuis[state] = options;
+	}
+
 	removeView(state) {
 		$('#' + state).empty();
 		if ((/main/i).test(state)) {
@@ -810,30 +814,30 @@ class CUI {
 		if (typeof msg != 'string') return;
 		uiAfterError = stateAfterError;
 		log(msg);
-		let $errMenu = $('#errMenu');
+		let $errMenu = $('#errMenu_9999');
 		if (!$errMenu.length) {
 			$('body').append(`
-				<div class="menu" id="errMenu">
+				<div class="menu" id="errMenu_9999">
   				<div class="row-y">
         		<div class="uie" name="error-okay">Okay</div>
     			</div>
 				</div>`);
-			$errMenu = $('#errMenu');
+			$errMenu = $('#errMenu_9999');
 			$errMenu.prepend(`<h1>Error</h1><p>unknown error</p>`);
-			this.addListeners('#errMenu');
+			this.addListeners('#errMenu_9999');
 		}
-		$('#errMenu h1').remove();
-		$('#errMenu p').remove();
+		$('#errMenu_9999 h1').remove();
+		$('#errMenu_9999 p').remove();
 		let msgArr = msg.split('\n');
 		for (let i = msgArr.length - 1; i >= 0; i--) {
-			$('#errMenu').prepend(`<p>${msgArr[i]}</p>`);
+			$('#errMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
 		}
 		if (code) {
-			$('#errMenu').prepend(`<h1>Error Code ${code}</h1>`);
+			$('#errMenu_9999').prepend(`<h1>Error Code ${code}</h1>`);
 		} else {
-			$('#errMenu').prepend(`<h1>Error</h1>`);
+			$('#errMenu_9999').prepend(`<h1>Error</h1>`);
 		}
-		await this.change('errMenu');
+		await this.change('errMenu_9999');
 		if (stateAfterError == 'quit') {
 			// stop
 			await delay(100000000000);
