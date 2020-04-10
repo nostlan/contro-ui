@@ -262,7 +262,7 @@ class CUI {
 		if ((/menu|select/i).test(state)) {
 			let $menu = $('#' + state);
 			$menu.css('margin-top',
-				$(window).height() * .5 - $menu.outerHeight() * .5);
+				window.innerHeight * .5 - $menu.outerHeight() * .5);
 		}
 		if (this.onResize) {
 			await this.onResize(adjust);
@@ -286,12 +286,21 @@ class CUI {
 		pos = position;
 		// if (this.opt.v) log(pos.toFixed(1));
 		time = ((time == undefined) ? 2000 : time);
-		let $reels = $('.reel');
+
+		let $reels;
+		if (/(main|menu)/i.test(this.ui)) {
+			$reels = $('#' + this.ui + ' .reel');
+		} else if (/select/i.test(this.ui)) {
+			$reels = $('#' + this.getParent(this.ui) + ' .reel');
+		} else {
+			return;
+		}
+		$('.reel');
 		for (let i = 0; i < $reels.length; i++) {
 			let $reel = $reels.eq(i);
 			let reelPos = pos;
 			if (i % 2 == 0) { // is reverse
-				reelPos = $reel[0].scrollHeight * .5 - pos;
+				reelPos = $reels.eq(1)[0].scrollHeight - window.innerHeight - pos;
 			}
 
 			if (time != 0) {
@@ -309,26 +318,27 @@ class CUI {
 		// if (/menu|select/i.test(this.ui)) return;
 		if (this.opt.v) log($cur);
 		let $reel = $cur.parent();
+		let $reels = $reel.parent().children();
 		let position = 0;
 		for (let i = 0; i < $cur.index(); i++) {
 			position += $reel.children().eq(i).height();
 		}
 		position += $cur.height() * .5;
 		if ($reel.hasClass('reverse')) {
-			position = $reel[0].scrollHeight * .5 - position;
-			position += $(window).height() * .5;
+			position = $reels.eq(1)[0].scrollHeight - window.innerHeight - position;
+			position += window.innerHeight * .5;
 		} else {
-			position -= $(window).height() * .5;
+			position -= window.innerHeight * .5;
 		}
 		let scrollDist = Math.abs(pos - position);
 		if (minDistance == null) minDistance = .4;
 		if (!(/select/i).test(this.ui) &&
-			scrollDist < $(window).height() * minDistance) return;
+			scrollDist < window.innerHeight * minDistance) return;
 		let sTime;
 		if (time > -1) {
 			sTime = time || 1;
 		} else {
-			sTime = ($(window).height() * 2 - $cur.height()) / 5;
+			sTime = (window.innerHeight * 2 - $cur.height()) / 5;
 		}
 		this.scrollTo(position, sTime);
 	}
