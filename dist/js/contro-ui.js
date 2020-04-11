@@ -156,6 +156,10 @@ class CUI {
 		log('override this method: cui.afterMove');
 	}
 
+	isButton(act) {
+		return btnNames.includes(act);
+	}
+
 	mapButtons(system) {
 		context = system || context;
 		let pad = gamepadMaps[this.gamepadType];
@@ -247,13 +251,13 @@ class CUI {
 			}
 			await this.change(this.getParent());
 		} else if (this.onAction) {
-			await this.onAction(act, btnNames.includes(act));
+			await this.onAction(act);
 		}
 	}
 
 	async doHeldAction(act, timeHeld) {
 		if (this.onHeldAction) {
-			return await this.onHeldAction(act, btnNames.includes(act), timeHeld);
+			return await this.onHeldAction(act, timeHeld);
 		}
 	}
 
