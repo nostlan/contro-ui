@@ -396,7 +396,7 @@ class CUI {
 			await this.onChange(state, subState || this.uiSub, this.gamepadConnected);
 		}
 		if ((/main/gi).test(state)) {
-			if (this.ui == 'errMenu' || !/menu|select/i.test(this.ui)) {
+			if (!cuis[state].$cur || !$('body').find(cuis[state].$cur).length) {
 				let $mid = $('#' + state + ' .reel.r0').children();
 				$mid = $mid.eq(Math.round($mid.length * .5) - 1);
 				this.makeCursor($mid, state);
@@ -674,7 +674,7 @@ class CUI {
 			// save button state change
 			btnStates[i] += 1;
 			// if button press just started, query is true
-			if (this.opt.v) log(i + ' button press start');
+			// if (this.opt.v) log(i + ' button press start');
 			await this.buttonPressed(i);
 		}
 	}
@@ -804,7 +804,7 @@ class CUI {
 				if (/(up|down|left|right)/.test(act)) {
 					this.move(act);
 				} else {
-					this.doAction(act);
+					this.buttonPressed(act);
 				}
 				return false;
 			});
@@ -826,7 +826,7 @@ class CUI {
 		log(msg);
 		let $errMenu = $('#errMenu_9999');
 		if (!$errMenu.length) {
-			$('body').append(`
+			$('body').prepend(`
 				<div class="menu" id="errMenu_9999">
   				<div class="row-y">
         		<div class="uie" name="error-okay">Okay</div>
