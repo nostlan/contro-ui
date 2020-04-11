@@ -236,7 +236,7 @@ class CUI {
 	}
 
 	async doAction(act) {
-		if (act == 'error-okay' || act == 'back') {
+		if (act == 'back' || (this.ui == 'errorMenu_9999' && act == 'a')) {
 			if (uiAfterError == 'quit') {
 				this.doAction('quit');
 				return;
@@ -428,7 +428,7 @@ class CUI {
 		}
 		this.resize(true, state);
 		if (this.ui && !options.b && !options.keepBackground &&
-			/menu/i.test(this.ui) && !this.isParent(this.ui, state)) {
+			/menu/i.test(this.ui) && (!/select/i.test(state) || !this.isParent(this.ui, state))) {
 			// $('.cui:not(.main)').hide();
 			$('#' + this.ui).hide();
 			$('.' + this.ui).hide();
@@ -592,9 +592,6 @@ class CUI {
 				this.move(lbl);
 				break;
 			case 'a':
-			case 'enter':
-				await this.doAction($cur.attr('name') || 'a');
-				break;
 			case 'b':
 			case 'x':
 			case 'y':
@@ -621,9 +618,6 @@ class CUI {
 		let res = false;
 		switch (lbl) {
 			case 'a':
-			case 'enter':
-				res = await this.doHeldAction($cur.attr('name') || 'a', timeHeld);
-				break;
 			case 'up':
 			case 'down':
 			case 'left':
@@ -804,7 +798,7 @@ class CUI {
 				if (/(up|down|left|right)/.test(act)) {
 					this.move(act);
 				} else {
-					this.buttonPressed(act);
+					this.doAction(act);
 				}
 				return false;
 			});
@@ -824,30 +818,30 @@ class CUI {
 		if (typeof msg != 'string') return;
 		uiAfterError = stateAfterError;
 		log(msg);
-		let $errMenu = $('#errMenu_9999');
-		if (!$errMenu.length) {
+		let $errorMenu = $('#errorMenu_9999');
+		if (!$errorMenu.length) {
 			$('body').prepend(`
-				<div class="menu" id="errMenu_9999">
+				<div class="menu" id="errorMenu_9999">
   				<div class="row-y">
         		<div class="uie" name="error-okay">Okay</div>
     			</div>
 				</div>`);
-			$errMenu = $('#errMenu_9999');
-			$errMenu.prepend(`<h1>Error</h1><p>unknown error</p>`);
-			this.addListeners('#errMenu_9999');
+			$errorMenu = $('#errorMenu_9999');
+			$errorMenu.prepend(`<h1>Error</h1><p>unknown error</p>`);
+			this.addListeners('#errorMenu_9999');
 		}
-		$('#errMenu_9999 h1').remove();
-		$('#errMenu_9999 p').remove();
+		$('#errorMenu_9999 h1').remove();
+		$('#errorMenu_9999 p').remove();
 		let msgArr = msg.split('\n');
 		for (let i = msgArr.length - 1; i >= 0; i--) {
-			$('#errMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
+			$('#errorMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
 		}
 		if (code) {
-			$('#errMenu_9999').prepend(`<h1>Error Code ${code}</h1>`);
+			$('#errorMenu_9999').prepend(`<h1>Error Code ${code}</h1>`);
 		} else {
-			$('#errMenu_9999').prepend(`<h1>Error</h1>`);
+			$('#errorMenu_9999').prepend(`<h1>Error</h1>`);
 		}
-		await this.change('errMenu_9999');
+		await this.change('errorMenu_9999');
 		if (stateAfterError == 'quit') {
 			// stop
 			await delay(100000000000);
