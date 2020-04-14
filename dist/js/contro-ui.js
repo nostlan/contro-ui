@@ -431,8 +431,11 @@ class CUI {
 			$('body').addClass(subState);
 		}
 		this.resize(true, state);
-		if (this.ui && !options.b && !options.keepBackground &&
-			/menu/i.test(this.ui) && (!/select/i.test(state) || !this.isParent(this.ui, state))) {
+		let isChild = !this.isParent(this.ui, state);
+		if (this.ui && !options.keepBackground &&
+			/menu/i.test(this.ui) &&
+			(!cuis[this.ui].keepBackground || isChild) &&
+			(!/select/i.test(state) || isChild)) {
 			// $('.cui:not(.main)').hide();
 			$('#' + this.ui).hide();
 			$('.' + this.ui).hide();
