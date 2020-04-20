@@ -397,7 +397,7 @@ class CUI {
 		this.uiPrev = this.ui;
 		$('#' + state).show();
 		if (this.onChange) {
-			await this.onChange(state, subState || this.uiSub, this.gamepadConnected);
+			await this.onChange(state, subState || this.uiSub);
 		}
 		if ((/main/gi).test(state)) {
 			if (!cuis[state].$cur || !$('body').find(cuis[state].$cur).length) {
@@ -738,15 +738,14 @@ class CUI {
 				type = 'xbox';
 			} else if ((/(ps\d|playstation)/i).test(gamepad.gamepad.id)) {
 				type = 'ps';
-			} else if ((/(nintendo|switch|joy *con|gamecube)/i).test(gamepad.gamepad.id)) {
+			} else if ((/(nintendo|wii|switch|joy *con|gamecube)/i).test(gamepad.gamepad.id)) {
 				type = 'nintendo';
 			}
 			log('controller detected: ' + gamepad.gamepad.id);
 			log('using the ' + type + ' gamepad mapping profile');
 			if (this.onChange) {
-				await this.onChange(this.ui, this.uiSub, true);
+				await this.onChange(this.ui, this.uiSub);
 			}
-			$('html').addClass('cui-this.gamepadConnected');
 			this.gamepadConnected = true;
 		}
 		if (this.gamepadConnected || gamepad.isConnected()) {
@@ -768,7 +767,8 @@ class CUI {
 		gamepadMaps = this.opt.gamepadMaps || gamepadMaps;
 		if (this.opt.gca) {
 			try {
-				require('./gca.js')();
+				this.gca = require('./gca.js');
+				this.gca.init();
 			} catch (ror) {
 				er(ror);
 			}
