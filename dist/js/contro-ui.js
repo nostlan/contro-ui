@@ -344,6 +344,11 @@ class CUI {
 		} else {
 			sTime = (window.innerHeight * 2 - $cur.height()) / 5;
 		}
+		if (this.opt.haptic && gamepad.isConnected()) {
+			gamepad.vibrate(100, {
+				strongMagnitude: 1
+			});
+		}
 		this.scrollTo(position, sTime);
 	}
 
@@ -523,6 +528,13 @@ class CUI {
 			}
 		}
 		if (!scale) scale = 1;
+
+		if (this.opt.haptic && gamepad.isConnected()) {
+			gamepad.vibrate(50, {
+				weakMagnitude: 1
+			});
+		}
+
 		if (inVerticalRow) {
 			if (x == curX) {
 				ret.$cur = $rowY.find('.uie').eq(y);
@@ -743,6 +755,11 @@ class CUI {
 			}
 			log('controller detected: ' + gamepad.gamepad.id);
 			log('using the ' + type + ' gamepad mapping profile');
+			if (this.opt.haptic) {
+				gamepad.vibrate(100, {
+					strongMagnitude: 1
+				});
+			}
 			if (this.onChange) {
 				await this.onChange(this.ui, this.uiSub);
 			}
