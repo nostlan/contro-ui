@@ -152,7 +152,10 @@ class CUI {
 	async onHeldAction() {
 		log('override this method: cui.onHeldAction');
 	}
-	async afterMove() {
+	beforeMove() {
+		log('override this method: cui.beforeMove');
+	}
+	afterMove() {
 		log('override this method: cui.afterMove');
 	}
 
@@ -361,11 +364,18 @@ class CUI {
 
 	makeCursor($cursor, state) {
 		if (!$cursor) return;
+		state = state || this.ui;
+		if (this.beforeMove) {
+			this.beforeMove($cur, state);
+		}
 		this.removeCursor();
 		$cur = $cursor;
 		$cur.addClass('cursor');
-		if (!cuis[state || this.ui]) cuis[state || this.ui] = {};
-		cuis[state || this.ui].$cur = $cur;
+		if (!cuis[state]) cuis[state] = {};
+		cuis[state].$cur = $cur;
+		if (this.afterMove) {
+			this.afterMove($cursor, state);
+		}
 	}
 
 	addView(state, options) {
@@ -587,9 +597,6 @@ class CUI {
 		if (!ret.$cur.length) return;
 		this.makeCursor(ret.$cur);
 		this.scrollToCursor();
-		if (this.afterMove) {
-			await this.afterMove();
-		}
 		return true;
 	}
 
