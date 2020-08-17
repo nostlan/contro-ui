@@ -1,61 +1,49 @@
 if (!log) {
 	const log = console.log;
 }
-const {
-	Mouse,
-	Keyboard,
-	Gamepad,
-	or,
-	and
-} = require('contro');
-let gamepad = new Gamepad();
 
-if (!jQuery) {
-	console.error('contro-ui requires jquery');
-	return;
-}
-// https://stackoverflow.com/questions/4080497/how-can-i-listen-for-a-click-and-hold-in-jquery
-(function($) {
-	function startTrigger(e) {
-		var $elem = $(this);
-		$elem.data('mouseheld_timeout', setTimeout(function() {
-			$elem.trigger('mouseheld');
-		}, e.data));
-	}
-
-	function stopTrigger() {
-		var $elem = $(this);
-		clearTimeout($elem.data('mouseheld_timeout'));
-	}
-
-	var mouseheld = $.event.special.mouseheld = {
-		setup: function(data) {
-			// the first binding of a mouseheld event on an element will trigger this
-			// lets bind our event handlers
-			var $this = $(this);
-			$this.bind('mousedown', +data || mouseheld.time, startTrigger);
-			$this.bind('mouseleave mouseup', stopTrigger);
-		},
-		teardown: function() {
-			var $this = $(this);
-			$this.unbind('mousedown', startTrigger);
-			$this.unbind('mouseleave mouseup', stopTrigger);
-		},
-		time: 750 // default to 750ms
-	};
-})(jQuery);
-
-let btnNames = [
-	'a', 'b', 'x', 'y',
-	'up', 'down', 'left', 'right',
-	'view', 'start'
-];
-let btns = {};
-for (let i of btnNames) {
-	btns[i] = gamepad.button(i);
-}
+let btnIdxs = {
+	a: 0,
+	b: 1,
+	x: 2,
+	y: 3,
+	l: 4,
+	r: 5,
+	select: 6,
+	start: 7,
+	leftStickBtn: 8,
+	rightStickBtn: 9,
+	up: 10,
+	down: 11,
+	left: 12,
+	right: 13
+};
+let axeIdxs = {
+	leftStick: {
+		x: 0,
+		y: 1
+	},
+	rightStick: {
+		x: 2,
+		y: 3
+	},
+	leftTrigger: 4,
+	rightTrigger: 5,
+	dpad: 6 // switch pro only
+};
+let dpadVals = {
+	up: -1.0,
+	upRight: -0.7142857142857143,
+	right: -0.4285714285714286,
+	downRight: -0.1428571428571429,
+	down: 0.1428571428571428,
+	downLeft: 0.4285714285714286,
+	left: 0.7142857142857142,
+	upLeft: 1.0,
+	nuetral: -1.2857142857142856
+};
 let btnStates = {};
-for (let i of btnNames) {
+for (let i in btnIdxs) {
 	btnStates[i] = false;
 }
 let stickNue = {
@@ -123,6 +111,8 @@ let context = 'PC';
 let opt = {
 	v: true
 };
+let gamepadIdx;
+let gamepad = {};
 
 class CUI {
 	constructor() {
@@ -130,6 +120,7 @@ class CUI {
 		this.uiPrev = '';
 		this.ui = '';
 		this.uiSub = '';
+		this.gamepadConnection = false;
 		this.gamepadConnected = false;
 		this.gamepadType = 'default';
 		this.disableSticks = false;
@@ -160,7 +151,7 @@ class CUI {
 	}
 
 	isButton(act) {
-		return btnNames.includes(act);
+		return Object.keys(btnIdxs).includes(act);
 	}
 
 	mapButtons(system) {
@@ -347,10 +338,8 @@ class CUI {
 		} else {
 			sTime = (window.innerHeight * 2 - $cur.height()) / 5;
 		}
-		if (this.opt.haptic && gamepad.isConnected()) {
-			gamepad.vibrate(100, {
-				strongMagnitude: 1
-			});
+		if (this.opt.haptic && this.gamepadConnected) {
+			this.vibrate(.5, 100);
 		}
 		this.scrollTo(position, sTime);
 	}
@@ -539,10 +528,8 @@ class CUI {
 		}
 		if (!scale) scale = 1;
 
-		if (this.opt.haptic && gamepad.isConnected()) {
-			gamepad.vibrate(50, {
-				weakMagnitude: 1
-			});
+		if (this.opt.haptic && this.gamepadConnected) {
+			this.vibrate(.3, 50);
 		}
 
 		if (inVerticalRow) {
@@ -665,16 +652,16 @@ class CUI {
 	async parseBtns(btns) {
 		for (let i in btns) {
 			let btn = btns[i];
+			let query;
+			if (!gamepad.id.includes('Plus') ||
+				!/(up|down|left|right)/.test(i)) {
+				query = btn.pressed;
+			} else {
+				query = (Math.abs(dpadVals[i] - gamepad.axes[9]) < 0.1);
+			}
 			// incomplete maps are okay
 			// no one to one mapping necessary
 			i = map[i] || i;
-
-			let query;
-			if (typeof btn == 'boolean') {
-				query = btn;
-			} else {
-				query = btn.query();
-			}
 			// if button is not pressed, query is false and unchanged
 			if (!btnStates[i] && !query) continue;
 			// if button press ended query is false
@@ -693,8 +680,6 @@ class CUI {
 			}
 			// save button state change
 			btnStates[i] += 1;
-			// if button press just started, query is true
-			// if (this.opt.v) log(i + ' button press start');
 			await this.buttonPressed(i);
 		}
 	}
@@ -727,15 +712,9 @@ class CUI {
 		if (type && this.gamepadType != type) {
 			let res = false;
 			for (let i in btns) {
-				let btn = btns[i];
-				let val;
-				if (typeof btn == 'boolean') {
-					val = btn;
-				} else {
-					val = btn.query();
-				}
-				if (val) {
+				if (btns[i].pressed) {
 					res = true;
+					break;
 				}
 			}
 			if (res) {
@@ -750,32 +729,60 @@ class CUI {
 		this.sticks(stks);
 	}
 
+	vibrate(intensity, duration) {
+		const actuator = gamepad.vibrationActuator;
+		if (!actuator || actuator.type !== 'dual-rumble') return;
+
+		actuator.pulse(intensity, duration);
+	}
+
 	async loop() {
 		let type = this.gamepadType;
-		if (!this.gamepadConnected && gamepad.isConnected()) {
-			if ((/xbox/i).test(gamepad.gamepad.id)) {
+		if (this.gamepadConnection) {
+			gamepad = navigator.getGamepads()[gamepadIdx];
+		}
+		if (!this.gamepadConnected && this.gamepadConnection) {
+			if ((/xbox/i).test(gamepad.id)) {
 				type = 'xbox';
-			} else if ((/(ps\d|playstation)/i).test(gamepad.gamepad.id)) {
+			} else if (/(ps\d|playstation)/i.test(gamepad.id)) {
 				type = 'ps';
-			} else if ((/(nintendo|wii|switch|joy *con|gamecube)/i).test(gamepad.gamepad.id)) {
+			} else if (/(nintendo|wii|switch|joy *con|gamecube)/i.test(gamepad.id)) {
+				type = 'nintendo';
+			} else if (/plus/i.test(gamepad.id)) {
+				btnIdxs.a = 1;
+				btnIdxs.b = 2;
+				btnIdxs.x = 0;
+				btnIdxs.y = 3;
+				btnIdxs.l = 4;
+				btnIdxs.r = 5;
+				btnIdxs.select = 8;
+				btnIdxs.start = 9;
 				type = 'nintendo';
 			}
-			log('controller detected: ' + gamepad.gamepad.id);
+			log('controller detected: ' + gamepad.id);
 			log('using the ' + type + ' gamepad mapping profile');
 			if (this.opt.haptic) {
-				gamepad.vibrate(100, {
-					strongMagnitude: 1
-				});
+				this.vibrate(.5, 100);
 			}
 			if (this.onChange) {
 				await this.onChange(this.ui, this.uiSub);
 			}
 			this.gamepadConnected = true;
 		}
-		if (this.gamepadConnected || gamepad.isConnected()) {
+		if (this.gamepadConnected) {
+			let btns = {};
+			for (let i in btnIdxs) {
+				btns[i] = gamepad.buttons[btnIdxs[i]];
+			}
 			let stks = {
-				left: gamepad.stick('left').query(),
-				right: gamepad.stick('right').query()
+				left: {
+					x: gamepad.axes[axeIdxs.leftStick.x],
+					y: gamepad.axes[axeIdxs.leftStick.y]
+				},
+				right: {
+					x: gamepad.axes[axeIdxs.leftStick.x],
+					y: gamepad.axes[axeIdxs.leftStick.y]
+				}
 			};
 			let trigs;
 			await this.parse(btns, stks, trigs, type);
@@ -789,6 +796,11 @@ class CUI {
 	start(options) {
 		this.opt = options || {};
 		gamepadMaps = this.opt.gamepadMaps || gamepadMaps;
+		let _this = this;
+		window.addEventListener("gamepadconnected", function(e) {
+			gamepadIdx = e.gamepad.index;
+			_this.gamepadConnection = true;
+		});
 		if (this.opt.gca) {
 			try {
 				this.gca = require('./gca.js');
