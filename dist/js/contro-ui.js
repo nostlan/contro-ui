@@ -339,7 +339,7 @@ class CUI {
 			sTime = (window.innerHeight * 2 - $cur.height()) / 5;
 		}
 		if (this.opt.haptic && this.gamepadConnected) {
-			this.vibrate(.5, 100);
+			this.vibrate(76, true);
 		}
 		this.scrollTo(position, sTime);
 	}
@@ -354,7 +354,7 @@ class CUI {
 	makeCursor($cursor, state) {
 		if (!$cursor) return;
 		state = state || this.ui;
-		if (this.beforeMove) {
+		if (this.beforeMove && $cursor != $cur) {
 			this.beforeMove($cur, state);
 		}
 		this.removeCursor();
@@ -529,7 +529,7 @@ class CUI {
 		if (!scale) scale = 1;
 
 		if (this.opt.haptic && this.gamepadConnected) {
-			this.vibrate(.3, 50);
+			this.vibrate(50, false);
 		}
 
 		if (inVerticalRow) {
@@ -729,11 +729,16 @@ class CUI {
 		this.sticks(stks);
 	}
 
-	vibrate(intensity, duration) {
+	vibrate(duration, strongly) {
 		const actuator = gamepad.vibrationActuator;
 		if (!actuator || actuator.type !== 'dual-rumble') return;
 
-		actuator.pulse(intensity, duration);
+		actuator.playEffect('dual-rumble', {
+			startDelay: 0,
+			duration: duration,
+			weakMagnitude: strongly ? 1 : 0,
+			strongMagnitude: strongly ? 1 : 0
+		});
 	}
 
 	async loop() {
@@ -762,7 +767,7 @@ class CUI {
 			log('controller detected: ' + gamepad.id);
 			log('using the ' + type + ' gamepad mapping profile');
 			if (this.opt.haptic) {
-				this.vibrate(.5, 100);
+				this.vibrate(100, true);
 			}
 			if (this.onChange) {
 				await this.onChange(this.ui, this.uiSub);
