@@ -9,14 +9,14 @@ let btnIdxs = {
 	y: 3,
 	l: 4,
 	r: 5,
-	select: 6,
-	start: 7,
-	leftStickBtn: 8,
-	rightStickBtn: 9,
-	up: 10,
-	down: 11,
-	left: 12,
-	right: 13
+	select: 8,
+	start: 9,
+	// leftStickBtn: 10,
+	// rightStickBtn: 11,
+	up: 12,
+	down: 13,
+	left: 14,
+	right: 15
 };
 let axeIdxs = {
 	leftStick: {
@@ -27,8 +27,8 @@ let axeIdxs = {
 		x: 2,
 		y: 3
 	},
-	leftTrigger: 4,
-	rightTrigger: 5,
+	// leftTrigger: 4,
+	// rightTrigger: 5,
 	dpad: 6 // switch pro only
 };
 let dpadVals = {
