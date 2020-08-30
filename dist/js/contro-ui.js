@@ -60,7 +60,7 @@ let $cur;
 
 let map = {};
 const remappingProfiles = {
-	Xbox_PS_Adaptive: {
+	xbox_ps_adaptive: {
 		map: {
 			a: 'b',
 			b: 'a',
@@ -69,7 +69,7 @@ const remappingProfiles = {
 		},
 		disable: 'ps|xbox|pc|mame'
 	},
-	Nintendo_Adaptive: {
+	nintendo_adaptive: {
 		map: {
 			a: 'b',
 			b: 'a',
@@ -78,7 +78,7 @@ const remappingProfiles = {
 		},
 		enable: 'ps|xbox|pc|mame'
 	},
-	Xbox_PS_Consistent: {
+	xbox_ps_constant: {
 		map: {
 			a: 'b',
 			b: 'a',
@@ -86,7 +86,7 @@ const remappingProfiles = {
 			y: 'x'
 		}
 	},
-	Nintendo_Consistent: {
+	nintendo_constant: {
 		map: {
 			a: 'b',
 			b: 'a',
@@ -94,16 +94,16 @@ const remappingProfiles = {
 			y: 'x'
 		}
 	},
-	Xbox_PS_None: {
+	xbox_ps_none: {
 		map: {}
 	},
-	Nintendo_None: {
+	nintendo_none: {
 		map: {}
 	}
 };
 let gamepadMaps = {
-	default: {
-		profile: 'Xbox_PS_Adaptive',
+	other: {
+		profile: 'adaptive',
 		map: {}
 	}
 };
@@ -122,7 +122,8 @@ class CUI {
 		this.uiSub = '';
 		this.gamepadConnection = false;
 		this.gamepadConnected = false;
-		this.gamepadType = 'default';
+		this.gamepadId = 'No controller';
+		this.gamepadType = 'other';
 		this.disableSticks = false;
 		this.er = this.error;
 		this.err = this.error;
@@ -157,7 +158,11 @@ class CUI {
 	mapButtons(system) {
 		context = system || context;
 		let pad = gamepadMaps[this.gamepadType];
-		let prof = remappingProfiles[pad.profile];
+		let type = this.gamepadType;
+		if (this.gamepadType == 'other') {
+			type = 'xbox_ps';
+		}
+		let prof = remappingProfiles[type + '_' + pad.profile];
 		let enable;
 		if (prof.enable) {
 			enable = new RegExp(`(${prof.enable})`, 'i');
@@ -194,8 +199,8 @@ class CUI {
 		}
 
 		// normalize X and Y to nintendo physical layout
-		// this will make the physical layout of an app consistent
-		// and doAction choices consistent for certain buttons
+		// this will make the physical layout of an app constant
+		// and doAction choices constant for certain buttons
 		if (this.opt.normalize &&
 			((this.opt.normalize.disable &&
 					!(new RegExp(`(${this.opt.normalize.disable})`, 'i')).test(pad.profile)) ||
@@ -730,6 +735,7 @@ class CUI {
 	}
 
 	vibrate(duration, strongly) {
+		if (!gamepad) return;
 		const actuator = gamepad.vibrationActuator;
 		if (!actuator || actuator.type !== 'dual-rumble') return;
 
@@ -764,6 +770,7 @@ class CUI {
 				btnIdxs.start = 9;
 				type = 'nintendo';
 			}
+			this.gamepadId = gamepad.id;
 			log('controller detected: ' + gamepad.id);
 			log('using the ' + type + ' gamepad mapping profile');
 			if (this.opt.haptic) {

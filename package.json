@@ -6,9 +6,7 @@
       "email": "qashto@gmail.com"
     }
   ],
-  "dependencies": {
-    "contro": "^2.1.3"
-  },
+  "dependencies": {},
   "entry point": "./dist/js/contro-ui.js",
   "keywords": [
     "pkg"
@@ -35,5 +33,5 @@
     "postversion": "git push",
     "V": "npm version minor --force"
   },
-  "version": "2.0.27"
+  "version": "2.0.28"
 }
