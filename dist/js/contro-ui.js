@@ -102,8 +102,16 @@ const remappingProfiles = {
 	}
 };
 let gamepadMaps = {
+	xbox_ps: {
+		profile: 'none',
+		map: {}
+	},
+	nintendo: {
+		profile: 'none',
+		map: {}
+	},
 	other: {
-		profile: 'adaptive',
+		profile: 'none',
 		map: {}
 	}
 };
@@ -157,11 +165,13 @@ class CUI {
 
 	mapButtons(system) {
 		context = system || context;
-		let pad = gamepadMaps[this.gamepadType];
 		let type = this.gamepadType;
-		if (this.gamepadType == 'other') {
+		if (this.gamepadType == 'xbox' ||
+			this.gamepadType == 'ps') {
 			type = 'xbox_ps';
 		}
+		let pad = gamepadMaps[type];
+		if (this.gamepadType == 'other') type = 'xbox_ps';
 		let prof = remappingProfiles[type + '_' + pad.profile];
 		let enable;
 		if (prof.enable) {
