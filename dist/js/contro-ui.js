@@ -829,6 +829,9 @@ class CUI {
 				this.gca.init();
 			} catch (ror) {
 				er(ror);
+				this.gca = {
+					connected: false
+				};
 			}
 		}
 		this.addListeners();
