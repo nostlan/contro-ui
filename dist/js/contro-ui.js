@@ -55,7 +55,7 @@ let mouse;
 let mouseWheelDeltaNSS;
 let pos = 0;
 let uiPrevStates = [];
-let uiAfterError = '';
+let uiAfterAlert = '';
 let $cur;
 
 let map = {};
@@ -249,15 +249,16 @@ class CUI {
 	}
 
 	async doAction(act) {
-		if (act == 'back' || (this.ui == 'errorMenu_9999' && act == 'a')) {
-			if (uiAfterError == 'quit') {
-				this.doAction('quit');
-				return;
+		if (this.ui == 'alertMenu_9999' && act == 'a') {
+			act = uiAfterAlert;
+			uiAfterAlert = '';
+			if (act == 'quit') await this.doAction('quit');
+			if (act == 'doubleBack') {
+				await this.doAction(this.getParent(this.getParent()));
 			}
-			if (uiAfterError) {
-				await this.change(uiAfterError);
-				return;
-			}
+			if (act) await this.change(act);
+			if (!act) await this.doAction('back');
+		} else if (act == 'back') {
 			await this.change(this.getParent());
 		} else if (this.onAction) {
 			await this.onAction(act);
@@ -409,7 +410,7 @@ class CUI {
 	async change(state, subState, options) {
 		options = options || {};
 		if (state == this.ui) {
-			this.doAction('b');
+			await this.doAction('b');
 			return;
 		}
 		if (this.ui) uiPrevStates.push(this.ui);
@@ -882,38 +883,46 @@ class CUI {
 		// });
 	}
 
-	async error(msg, code, stateAfterError) {
+	async alert(msg, title, stateAfterAlert) {
 		if (typeof msg != 'string') return;
-		uiAfterError = stateAfterError;
+		uiAfterAlert = stateAfterAlert;
 		log(msg);
-		let $errorMenu = $('#errorMenu_9999');
-		if (!$errorMenu.length) {
+		let $alertMenu = $('#alertMenu_9999');
+		if (!$alertMenu.length) {
 			$('body').prepend(`
-				<div class="menu" id="errorMenu_9999">
+				<div class="menu" id="alertMenu_9999">
   				<div class="row-y">
-        		<div class="uie" name="error-okay">Okay</div>
+        		<div class="uie opt0" name="alert-okay">Okay</div>
     			</div>
 				</div>`);
-			$errorMenu = $('#errorMenu_9999');
-			$errorMenu.prepend(`<h1>Error</h1><p>unknown error</p>`);
-			this.addListeners('#errorMenu_9999');
+			$alertMenu = $('#alertMenu_9999');
+			$alertMenu.prepend(`<h1>Alert</h1><p>default alert</p>`);
+			this.addListeners('#alertMenu_9999');
 		}
-		$('#errorMenu_9999 h1').remove();
-		$('#errorMenu_9999 p').remove();
+		$('#alertMenu_9999 h1').remove();
+		$('#alertMenu_9999 p').remove();
 		let msgArr = msg.split('\n');
 		for (let i = msgArr.length - 1; i >= 0; i--) {
-			$('#errorMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
+			$('#alertMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
 		}
-		if (code) {
-			$('#errorMenu_9999').prepend(`<h1>Error Code ${code}</h1>`);
-		} else {
-			$('#errorMenu_9999').prepend(`<h1>Error</h1>`);
-		}
-		await this.change('errorMenu_9999');
-		if (stateAfterError == 'quit') {
+		$('#alertMenu_9999').prepend(`<h1>${title}</h1>`);
+		await this.change('alertMenu_9999');
+		if (stateAfterAlert == 'quit') {
 			// stop
 			await delay(100000000000);
 		}
+	}
+
+	async error(msg, code, stateAfterError) {
+		let title;
+		if (typeof code == 'string') {
+			title = code;
+		} else if (code) {
+			title = 'Error Code ' + code;
+		} else {
+			title = 'Error';
+		}
+		await this.alert(msg, title, stateAfterError);
 	}
 }
 
