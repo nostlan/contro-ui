@@ -252,9 +252,11 @@ class CUI {
 		if (this.ui == 'alertMenu_9999' && act == 'a') {
 			act = uiAfterAlert;
 			uiAfterAlert = '';
-			if (act == 'quit') await this.doAction('quit');
+			if (act == 'quit') {
+				return await this.doAction('quit');
+			}
 			if (act == 'doubleBack') {
-				await this.doAction(this.getParent(this.getParent()));
+				act = this.getParent(this.getParent());
 			}
 			if (act) await this.change(act);
 			if (!act) await this.doAction('back');
