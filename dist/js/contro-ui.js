@@ -67,7 +67,7 @@ const remappingProfiles = {
 			x: 'y',
 			y: 'x'
 		},
-		disable: 'ps|xbox|pc|mame'
+		disable: 'ps|xbox|pc|arcade'
 	},
 	nintendo_adaptive: {
 		map: {
@@ -76,7 +76,7 @@ const remappingProfiles = {
 			x: 'y',
 			y: 'x'
 		},
-		enable: 'ps|xbox|pc|mame'
+		enable: 'ps|xbox|pc|arcade'
 	},
 	xbox_ps_constant: {
 		map: {
