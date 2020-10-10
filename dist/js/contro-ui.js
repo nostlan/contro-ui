@@ -44,7 +44,7 @@ let dpadVals = {
 };
 let btnStates = {};
 for (let i in btnIdxs) {
-	btnStates[i] = false;
+	btnStates[i] = 0;
 }
 let stickNue = {
 	x: true,
@@ -137,6 +137,9 @@ class CUI {
 		this.err = this.error;
 	}
 
+	async passthrough() {
+		log('override this method: cui.passthrough');
+	}
 	async onChange() {
 		log('override this method: cui.onChange');
 	}
@@ -491,7 +494,7 @@ class CUI {
 		});
 	}
 
-	async move(direction) {
+	async _move(direction) {
 		document.body.requestPointerLock();
 		let $rowX = $cur.closest('.row-x');
 		let $rowY = $cur.closest('.row-y');
@@ -605,6 +608,15 @@ class CUI {
 		return true;
 	}
 
+	async move(direction) {
+		// TODO enable only if game wants to
+		// auto-map left stick to dpad
+		btnStates[direction] = btnStates[direction] || 1;
+
+		let res = await this._move(direction);
+		await this.doAction(direction);
+	}
+
 	async buttonPressed(btn) {
 		if (typeof btn == 'string') {
 			btn = {
@@ -620,7 +632,7 @@ class CUI {
 			case 'down':
 			case 'left':
 			case 'right':
-				this.move(lbl);
+				await this.move(lbl);
 				break;
 			case 'a':
 			case 'b':
@@ -764,6 +776,11 @@ class CUI {
 		let type = this.gamepadType;
 		if (this.gamepadConnection) {
 			gamepad = navigator.getGamepads()[gamepadIdx];
+			if (!gamepad) {
+				// gamepad disconnected
+				this.gamepadConnection = false;
+				this.gamepadConnected = false;
+			}
 		}
 		if (!this.gamepadConnected && this.gamepadConnection) {
 			if ((/xbox/i).test(gamepad.id)) {
@@ -811,6 +828,10 @@ class CUI {
 			};
 			let trigs;
 			await this.parse(btns, stks, trigs, type);
+
+			if (this.passthrough) {
+				this.passthrough(btnStates, stks, trigs, type);
+			}
 		}
 		var _this = this;
 		requestAnimationFrame(function() {
