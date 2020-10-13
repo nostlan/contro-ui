@@ -683,10 +683,10 @@ class CUI {
 		for (let i in btns) {
 			let btn = btns[i];
 			let query;
-			if (!gamepad.id.includes('Plus') ||
+			if ((gamepad.id && !gamepad.id.includes('Plus')) ||
 				!/(up|down|left|right)/.test(i)) {
 				query = btn.pressed;
-			} else {
+			} else if (gamepad.id) {
 				query = (Math.abs(dpadVals[i] - gamepad.axes[9]) < 0.1);
 			}
 			// incomplete maps are okay
@@ -848,14 +848,11 @@ class CUI {
 			_this.gamepadConnection = true;
 		});
 		if (this.opt.gca) {
+			this.gca = require('./gca.js');
 			try {
-				this.gca = require('./gca.js');
 				this.gca.init();
 			} catch (ror) {
 				er(ror);
-				this.gca = {
-					connected: false
-				};
 			}
 		}
 		this.addListeners();

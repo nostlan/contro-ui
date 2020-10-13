@@ -1,9 +1,9 @@
 let gcaJS = require('gca-js');
-let adapter;
 
 class GCA {
 
 	constructor() {
+		this.adapters = [];
 		this.connected = false;
 	}
 
@@ -11,18 +11,22 @@ class GCA {
 		process.stdin.resume();
 
 		// Get the first detected GameCube adapter.
-		adapter = gcaJS.getAdaptersList()[0];
+		this.adapters = gcaJS.getAdaptersList();
 
-		if (!adapter) return;
+		if (!this.adapters[0]) {
+			console.error('failed to connect to Gamecube Controller Adapter(s)');
+			return;
+		}
 
-		this.start();
-
+		for (let adapter of this.adapters) {
+			this.start(adapter);
+		}
 		process.on('SIGINT', this.exit);
 		this.connected = true;
 	}
 
-	start() {
-		// Start communication to the first adapter detected.
+	start(adapter) {
+		// Start communication to the adapter.
 		gcaJS.startAdapter(adapter);
 
 		// Begin polling status information of the adapter, and call a function // once a response has been received.
@@ -46,9 +50,11 @@ class GCA {
 						left: gamepads[i].axes.triggerL,
 						right: gamepads[i].axes.triggerR
 					};
-					for (var lbl in gamepads[i].buttons) {
-						gamepads[i].buttons[lbl.replace(/(button|pad)/, '').toLowerCase()] =
-							gamepads[i].buttons[lbl];
+					for (let lbl in gamepads[i].buttons) {
+						let lbl1 = lbl.replace(/(button|pad)/, '').toLowerCase();
+						gamepads[i].buttons[lbl1] = {
+							pressed: gamepads[i].buttons[lbl]
+						};
 						delete gamepads[i].buttons[lbl];
 					}
 					cui.parse(gamepads[i].buttons, sticks, triggers, 'nintendo');
@@ -60,12 +66,14 @@ class GCA {
 		});
 	}
 
-	stop() {
+	stop(adapter) {
 		gcaJS.stopAdapter(adapter);
 	}
 
 	exit() {
-		this.stop();
+		for (let adapter of this.adapters) {
+			this.stop(adapter);
+		}
 		process.exit();
 	}
 }
