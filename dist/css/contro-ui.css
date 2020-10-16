@@ -1,16 +1,16 @@
 .uie.no-outline {
-	outline: none!important;
+  outline: none !important;
 }
 
 .menu {
-	position: fixed;
-	z-index: 100;
-	width: 50vw;
-	padding: 15px 10px;
-	margin-left: 25vw;
-	margin-top: 5vh;
-	text-align: left;
-	display: none;
+  position: fixed;
+  z-index: 100;
+  width: 50vw;
+  padding: 15px 10px;
+  margin-left: 25vw;
+  margin-top: 5vh;
+  text-align: left;
+  display: none;
 }
 
 .menu h1,
@@ -20,73 +20,86 @@
 .menu h5,
 .menu input,
 .menu p,
+.menu code,
 .menu pre,
-.menu ul {
-	margin-left: 5%;
-	margin-right: 5%;
+.menu ul,
+.menu textarea {
+  margin-left: 5%;
+  margin-right: 5%;
+}
+
+.menu textarea {
+  font-family: Consolas, Monaco, Lucida Console,
+    Liberation Mono, DejaVu Sans Mono,
+    Bitstream Vera Sans Mono, Courier New, monospace;
+  color: #eee;
+  background: #000;
+  width: 90%;
+  margin-bottom: 1%;
+  overflow-y: scroll;
 }
 
 .menu input {
-	width: 90%;
-	margin-bottom: 3%;
+  width: 90%;
+  margin-bottom: 3%;
 }
 
 .menu code,
 .menu pre {
-	font-size: 1.5vh;
+  font-size: 1.5vh;
 }
 
 .menu input,
 .menu p,
 .menu ul {
-	font-size: 2vh;
+  font-size: 2vh;
 }
 
 .menu h1 {
-	text-align: center;
-	font-size: 4vh;
+  text-align: center;
+  font-size: 4vh;
 }
 
 .uie {
-	text-align: center;
+  text-align: center;
 }
 
 .menu .uie {
-	margin: 0;
-	font-size: 4vh;
-	border-radius: 10px;
-	box-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, .5);
+  margin: 0;
+  font-size: 4vh;
+  border-radius: 10px;
+  box-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, .5);
 }
 
 .menu .row-x {
-	margin: 0;
+  margin: 0;
 }
 
 .menu .row-x .uie,
 .menu .row-x:last-child,
 .menu .uie:last-child {
-	margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .menu .row-x {
-	margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .menu .row-x .uie {
-	margin-left: 5px;
-	margin-right: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .menu .row-x .uie:last-child {
-	margin-left: 5px;
-	margin-right: 0;
+  margin-left: 5px;
+  margin-right: 0;
 }
 
 .menu .row-x .uie:first-child {
-	margin-left: 0;
-	margin-right: 5px;
+  margin-left: 0;
+  margin-right: 5px;
 }
 
 .menu .cursor {
-	filter: brightness(1.2);
+  filter: brightness(1.2);
 }

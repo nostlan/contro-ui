@@ -14,7 +14,7 @@ class GCA {
 		this.adapters = gcaJS.getAdaptersList();
 
 		if (!this.adapters[0]) {
-			console.error('failed to connect to Gamecube Controller Adapter(s)');
+			console.warn('did not connect to Gamecube Controller Adapter(s)');
 			return;
 		}
 
@@ -26,6 +26,7 @@ class GCA {
 	}
 
 	start(adapter) {
+		if (!adapter) return;
 		// Start communication to the adapter.
 		gcaJS.startAdapter(adapter);
 
@@ -67,6 +68,7 @@ class GCA {
 	}
 
 	stop(adapter) {
+		if (!adapter) return;
 		gcaJS.stopAdapter(adapter);
 	}
 

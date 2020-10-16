@@ -919,11 +919,14 @@ class CUI {
 			$alertMenu.prepend(`<h1>Alert</h1><p>default alert</p>`);
 			this.addListeners('#alertMenu_9999');
 		}
-		$('#alertMenu_9999 h1').remove();
-		$('#alertMenu_9999 p').remove();
-		let msgArr = msg.split('\n');
-		for (let i = msgArr.length - 1; i >= 0; i--) {
-			$('#alertMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
+		$('#alertMenu_9999 > :not(.row-y)').remove();
+		if (/<[^>]*>/.test(msg)) {
+			$('#alertMenu_9999').prepend(msg);
+		} else {
+			let msgArr = msg.split('\n');
+			for (let i = msgArr.length - 1; i >= 0; i--) {
+				$('#alertMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
+			}
 		}
 		$('#alertMenu_9999').prepend(`<h1>${title}</h1>`);
 		await this.change('alertMenu_9999');
