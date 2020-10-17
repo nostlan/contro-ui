@@ -931,6 +931,7 @@ class CUI {
 		$('#alertMenu_9999').prepend(`<h1>${title}</h1>`);
 		await this.change('alertMenu_9999');
 		if (stateAfterAlert == 'quit') {
+			$('#alertMenu_9999 .opt0').text('close');
 			// stop
 			await delay(100000000000);
 		}
