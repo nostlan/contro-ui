@@ -121,6 +121,7 @@ class CUI {
 		this.players = [];
 		this.contros = {};
 		this.context = 'PC';
+		this.convertStcksToDpad = false;
 	}
 
 	async passthrough() {
@@ -216,6 +217,7 @@ class CUI {
 		for (let id in this.contros) {
 			this.mapControBtns(this.contros[id]);
 		}
+		this.convertStcksToDpad = /(nes|snes)/.test(this.context);
 	}
 
 	getLevel(ui) {
@@ -675,19 +677,22 @@ class CUI {
 		for (let i in btns) {
 			let btn = btns[i];
 			let query;
-			if (contro.subtype != 'switch-pro' ||
-				!/(up|down|left|right)/.test(i)) {
+			// incomplete maps are okay
+			// no one to one mapping necessary
+			i = contro.map[i] || i;
+			let isDpadBtn = /(up|down|left|right)/.test(i);
+			if (contro.subtype != 'switch-pro' || !isDpadBtn) {
 				query = btn.pressed;
 			} else {
 				query = (Math.abs(dpadVals[i] - contro.pad.axes[9]) < 0.1);
 			}
-			// incomplete maps are okay
-			// no one to one mapping necessary
-			i = contro.map[i] || i;
 			// if button is not pressed, query is false and unchanged
 			if (!contro.btnStates[i] && !query) continue;
 			// if button press ended query is false
-			if (!query) {
+			if (!query &&
+				(!isDpadBtn || !this.convertStcksToDpad ||
+					(/(up|down)/.test(i) && contro.stickNue.y) ||
+					(/(left|right)/.test(i) && contro.stickNue.x))) {
 				// log(i + ' button press end');
 				contro.btnStates[i] = 0;
 				continue;
@@ -700,6 +705,10 @@ class CUI {
 			} else {
 				this.buttonHeld(i, contro.btnStates[i] * 16);
 			}
+
+			if (!this.players.includes(contro.id)) {
+				this.players.push(contro.id);
+			}
 		}
 	}
 
@@ -709,19 +718,26 @@ class CUI {
 		let vect = stks.left;
 		let stickNue = contro.stickNue;
 		if (vect.y < -.5) {
+			// used to move in contro-ui menus
 			if (stickNue.y) this.move('up');
+			// converts stick movement to dpad button presses
+			// when using passthrough for certain contexts
+			if (this.convertStcksToDpad) contro.btnStates.up++;
 			stickNue.y = false;
 		} else if (vect.y > .5) {
 			if (stickNue.y) this.move('down');
+			if (this.convertStcksToDpad) contro.btnStates.down++;
 			stickNue.y = false;
 		} else {
 			stickNue.y = true;
 		}
 		if (vect.x < -.5) {
 			if (stickNue.x) this.move('left');
+			if (this.convertStcksToDpad) contro.btnStates.left++;
 			stickNue.x = false;
 		} else if (vect.x > .5) {
 			if (stickNue.x) this.move('right');
+			if (this.convertStcksToDpad) contro.btnStates.right++;
 			stickNue.x = false;
 		} else {
 			stickNue.x = true;
@@ -737,6 +753,18 @@ class CUI {
 		}
 		this.parseBtns(contro, btns);
 		this.sticks(contro, stks);
+
+		if (!this.passthrough) return;
+
+		for (let i in this.players) {
+			if (contro.id != this.players[i]) continue;
+			this.passthrough({
+				port: Number(i),
+				btns: contro.btnStates,
+				stks: stks,
+				trigs: trigs
+			});
+		}
 	}
 
 	vibrate(duration, strongly) {
@@ -754,15 +782,24 @@ class CUI {
 		});
 	}
 
+	makePlayer1(contro) {
+		disconnectPlayer(contro);
+		this.players.unshift(contro.id);
+	}
+
+	disconnectPlayer(contro) {
+		for (let i in this.players) {
+			if (contro.id != this.players[i]) continue;
+			this.players.splice(1, i);
+		}
+	}
+
 	pollContro(contro) {
 		if (contro.subtype == 'gca') return;
 		contro.pad = navigator.getGamepads()[contro.id];
 		// gamepad disconnected
 		if (!contro.pad) {
-			for (let i in this.players) {
-				if (contro.id != this.players[i]) continue;
-				this.players.splice(1, i);
-			}
+			disconnectPlayer(contro);
 			return;
 		}
 		let btns = {};
@@ -782,18 +819,6 @@ class CUI {
 		};
 		let trigs;
 		this.parse(contro, btns, stks, trigs);
-
-		if (!this.passthrough) return;
-
-		for (let i in this.players) {
-			if (contro.id != this.players[i]) continue;
-			this.passthrough({
-				port: i,
-				btns: contro.btnStates,
-				stks: stks,
-				trigs: trigs
-			});
-		}
 	}
 
 	loop() {
@@ -807,7 +832,6 @@ class CUI {
 	}
 
 	addContro(contro) {
-		this.players.push(contro.id);
 		contro.pad = navigator.getGamepads()[contro.id] || contro.pad;
 		contro.type = contro.type || 'other';
 		contro.profile = contro.profile || null;
