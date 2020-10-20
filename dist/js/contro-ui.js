@@ -2,7 +2,7 @@ if (!log) {
 	const log = console.log;
 }
 
-let btnIdxs = {
+let dflt_btnIdxs = {
 	a: 0,
 	b: 1,
 	x: 2,
@@ -18,7 +18,7 @@ let btnIdxs = {
 	left: 14,
 	right: 15
 };
-let axeIdxs = {
+let dflt_axeIdxs = {
 	leftStick: {
 		x: 0,
 		y: 1
@@ -42,23 +42,6 @@ let dpadVals = {
 	upLeft: 1.0,
 	nuetral: -1.2857142857142856
 };
-let btnStates = {};
-for (let i in btnIdxs) {
-	btnStates[i] = 0;
-}
-let stickNue = {
-	x: true,
-	y: true
-};
-let cuis = {};
-let mouse;
-let mouseWheelDeltaNSS;
-let pos = 0;
-let uiPrevStates = [];
-let uiAfterAlert = '';
-let $cur;
-
-let map = {};
 const remappingProfiles = {
 	xbox_ps_adaptive: {
 		map: {
@@ -115,26 +98,29 @@ let gamepadMaps = {
 		map: {}
 	}
 };
-let context = 'PC';
+let cuis = {};
+let mouse;
+let mouseWheelDeltaNSS;
+let pos = 0;
+let uiPrevStates = [];
+let uiAfterAlert = '';
+let $cur;
 let opt = {
 	v: true
 };
-let gamepadIdx;
-let gamepad = {};
 
 class CUI {
 	constructor() {
+		this.er = this.error;
+		this.err = this.error;
 		this.opt = {};
 		this.uiPrev = '';
 		this.ui = '';
 		this.uiSub = '';
-		this.gamepadConnection = false;
-		this.gamepadConnected = false;
-		this.gamepadId = 'No controller';
-		this.gamepadType = 'other';
-		this.disableSticks = false;
-		this.er = this.error;
-		this.err = this.error;
+		// array of players' contro id
+		this.players = [];
+		this.contros = {};
+		this.context = 'PC';
 	}
 
 	async passthrough() {
@@ -163,19 +149,18 @@ class CUI {
 	}
 
 	isButton(act) {
-		return Object.keys(btnIdxs).includes(act);
+		return Object.keys(dflt_btnIdxs).includes(act);
 	}
 
-	mapButtons(system) {
-		context = system || context;
-		let type = this.gamepadType;
-		if (this.gamepadType == 'xbox' ||
-			this.gamepadType == 'ps') {
+	mapControBtns(contro) {
+		let type = contro.type;
+		if (type == 'xbox' || type == 'ps') {
 			type = 'xbox_ps';
 		}
-		let pad = gamepadMaps[type];
-		if (this.gamepadType == 'other') type = 'xbox_ps';
-		let prof = remappingProfiles[type + '_' + pad.profile];
+		let gm = gamepadMaps[type];
+		gm.profile = contro.profile || gm.profile;
+		if (contro.type == 'other') type = 'xbox_ps';
+		let prof = remappingProfiles[type + '_' + gm.profile];
 		let enable;
 		if (prof.enable) {
 			enable = new RegExp(`(${prof.enable})`, 'i');
@@ -200,15 +185,15 @@ class CUI {
 		// since A(Xbox One) auto maps to X(PS3)
 		//  Y B  ->  △ ○
 		// X A  ->  □ X
-		if ((!enable || enable.test(context)) && (!disable || !disable.test(context))) {
-			// log('controller remapping enabled for ' + context);
-			map = {};
+		if ((!enable || enable.test(this.context)) && (!disable || !disable.test(this.context))) {
+			// log('controller remapping enabled for ' + this.context);
+			contro.map = {};
 			for (let i in prof.map) {
-				map[i] = pad.map[prof.map[i]] || prof.map[i];
+				contro.map[i] = gm.map[prof.map[i]] || prof.map[i];
 			}
 		} else {
-			// log('no controller remapping for ' + context);
-			map = {};
+			// log('no controller remapping for ' + this.context);
+			contro.map = {};
 		}
 
 		// normalize X and Y to nintendo physical layout
@@ -216,13 +201,20 @@ class CUI {
 		// and doAction choices constant for certain buttons
 		if (this.opt.normalize &&
 			((this.opt.normalize.disable &&
-					!(new RegExp(`(${this.opt.normalize.disable})`, 'i')).test(pad.profile)) ||
+					!(new RegExp(`(${this.opt.normalize.disable})`, 'i')).test(gm.profile)) ||
 				(this.opt.normalize.enable &&
-					(new RegExp(`(${this.opt.normalize.enable})`, 'i')).test(pad.profile))
+					(new RegExp(`(${this.opt.normalize.enable})`, 'i')).test(gm.profile))
 			)) {
 			for (let i in this.opt.normalize.map) {
-				map[i] = pad.map[this.opt.normalize.map[i]] || this.opt.normalize.map[i];
+				contro.map[i] = gm.map[this.opt.normalize.map[i]] || this.opt.normalize.map[i];
 			}
+		}
+	}
+
+	mapButtons(context) {
+		this.context = context || this.context;
+		for (let id in this.contros) {
+			this.mapControBtns(this.contros[id]);
 		}
 	}
 
@@ -359,7 +351,7 @@ class CUI {
 		} else {
 			sTime = (window.innerHeight * 2 - $cur.height()) / 5;
 		}
-		if (this.opt.haptic && this.gamepadConnected) {
+		if (this.opt.haptic) {
 			this.vibrate(76, true);
 		}
 		this.scrollTo(position, sTime);
@@ -549,7 +541,7 @@ class CUI {
 		}
 		if (!scale) scale = 1;
 
-		if (this.opt.haptic && this.gamepadConnected) {
+		if (this.opt.haptic) {
 			this.vibrate(50, false);
 		}
 
@@ -611,7 +603,7 @@ class CUI {
 	async move(direction) {
 		// TODO enable only if game wants to
 		// auto-map left stick to dpad
-		btnStates[direction] = btnStates[direction] || 1;
+		// contro.btnStates[direction] = contro.btnStates[direction] || 1;
 
 		let res = await this._move(direction);
 		await this.doAction(direction);
@@ -679,45 +671,43 @@ class CUI {
 		return res;
 	}
 
-	async parseBtns(btns) {
+	parseBtns(contro, btns) {
 		for (let i in btns) {
 			let btn = btns[i];
 			let query;
-			if ((gamepad.id && !gamepad.id.includes('Plus')) ||
+			if (contro.subtype != 'switch-pro' ||
 				!/(up|down|left|right)/.test(i)) {
 				query = btn.pressed;
-			} else if (gamepad.id) {
-				query = (Math.abs(dpadVals[i] - gamepad.axes[9]) < 0.1);
+			} else {
+				query = (Math.abs(dpadVals[i] - contro.pad.axes[9]) < 0.1);
 			}
 			// incomplete maps are okay
 			// no one to one mapping necessary
-			i = map[i] || i;
+			i = contro.map[i] || i;
 			// if button is not pressed, query is false and unchanged
-			if (!btnStates[i] && !query) continue;
+			if (!contro.btnStates[i] && !query) continue;
 			// if button press ended query is false
 			if (!query) {
 				// log(i + ' button press end');
-				btnStates[i] = 0;
+				contro.btnStates[i] = 0;
 				continue;
 			}
 			// if button is held, query is true and unchanged
-			if (btnStates[i] && query) {
-				btnStates[i] += 1;
-				if (await this.buttonHeld(i, btnStates[i] * 16)) {
-					btnStates[i] = 0;
-				}
-				continue;
-			}
 			// save button state change
-			btnStates[i] += 1;
-			await this.buttonPressed(i);
+			contro.btnStates[i] += 1;
+			if (contro.btnStates[i] == 1) {
+				this.buttonPressed(i);
+			} else {
+				this.buttonHeld(i, contro.btnStates[i] * 16);
+			}
 		}
 	}
 
-	sticks(stks) {
-		if (this.disableSticks) return;
+	sticks(contro, stks) {
+		if (contro.disableSticks) return;
 		let didMove = false;
 		let vect = stks.left;
+		let stickNue = contro.stickNue;
 		if (vect.y < -.5) {
 			if (stickNue.y) this.move('up');
 			stickNue.y = false;
@@ -738,30 +728,22 @@ class CUI {
 		}
 	}
 
-	async parse(btns, stks, trigs, type) {
-		if (type && this.gamepadType != type) {
-			let res = false;
-			for (let i in btns) {
-				if (btns[i].pressed) {
-					res = true;
-					break;
-				}
-			}
-			if (res) {
-				this.gamepadType = type;
-				this.mapButtons();
-			} else {
-				return;
-			}
+	parse(contro, btns, stks, trigs) {
+		if (!this.contros[contro.id]) {
+			contro = this.addContro(contro);
+			this.mapControBtns(contro);
+		} else {
+			contro = this.contros[contro.id];
 		}
-
-		await this.parseBtns(btns);
-		this.sticks(stks);
+		this.parseBtns(contro, btns);
+		this.sticks(contro, stks);
 	}
 
 	vibrate(duration, strongly) {
-		if (!gamepad) return;
-		const actuator = gamepad.vibrationActuator;
+		if (!this.players[0]) return;
+		let contro = this.contros[this.players[0]];
+		if (contro.subtype == 'gca') return;
+		const actuator = contro.pad.vibrationActuator;
 		if (!actuator || actuator.type !== 'dual-rumble') return;
 
 		actuator.playEffect('dual-rumble', {
@@ -772,80 +754,117 @@ class CUI {
 		});
 	}
 
-	async loop() {
-		let type = this.gamepadType;
-		if (this.gamepadConnection) {
-			gamepad = navigator.getGamepads()[gamepadIdx];
-			if (!gamepad) {
-				// gamepad disconnected
-				this.gamepadConnection = false;
-				this.gamepadConnected = false;
+	pollContro(contro) {
+		if (contro.subtype == 'gca') return;
+		contro.pad = navigator.getGamepads()[contro.id];
+		// gamepad disconnected
+		if (!contro.pad) {
+			for (let i in this.players) {
+				if (contro.id != this.players[i]) continue;
+				this.players.splice(1, i);
 			}
+			return;
 		}
-		if (!this.gamepadConnected && this.gamepadConnection) {
-			if ((/xbox/i).test(gamepad.id)) {
-				type = 'xbox';
-			} else if (/(ps\d|playstation)/i.test(gamepad.id)) {
-				type = 'ps';
-			} else if (/(nintendo|wii|switch|joy *con|gamecube)/i.test(gamepad.id)) {
-				type = 'nintendo';
-			} else if (/plus/i.test(gamepad.id)) {
-				btnIdxs.a = 1;
-				btnIdxs.b = 2;
-				btnIdxs.x = 0;
-				btnIdxs.y = 3;
-				btnIdxs.l = 4;
-				btnIdxs.r = 5;
-				btnIdxs.select = 8;
-				btnIdxs.start = 9;
-				type = 'nintendo';
-			}
-			this.gamepadId = gamepad.id;
-			log('controller detected: ' + gamepad.id);
-			log('using the ' + type + ' gamepad mapping profile');
-			if (this.opt.haptic) {
-				this.vibrate(100, true);
-			}
-			if (this.onChange) {
-				await this.onChange(this.ui, this.uiSub);
-			}
-			this.gamepadConnected = true;
+		let btns = {};
+		let pad = contro.pad;
+		for (let i in contro.btnIdxs) {
+			btns[i] = pad.buttons[contro.btnIdxs[i]];
 		}
-		if (this.gamepadConnected) {
-			let btns = {};
-			for (let i in btnIdxs) {
-				btns[i] = gamepad.buttons[btnIdxs[i]];
+		let stks = {
+			left: {
+				x: pad.axes[contro.axeIdxs.leftStick.x],
+				y: pad.axes[contro.axeIdxs.leftStick.y]
+			},
+			right: {
+				x: pad.axes[contro.axeIdxs.leftStick.x],
+				y: pad.axes[contro.axeIdxs.leftStick.y]
 			}
-			let stks = {
-				left: {
-					x: gamepad.axes[axeIdxs.leftStick.x],
-					y: gamepad.axes[axeIdxs.leftStick.y]
-				},
-				right: {
-					x: gamepad.axes[axeIdxs.leftStick.x],
-					y: gamepad.axes[axeIdxs.leftStick.y]
-				}
-			};
-			let trigs;
-			await this.parse(btns, stks, trigs, type);
+		};
+		let trigs;
+		this.parse(contro, btns, stks, trigs);
 
-			if (this.passthrough) {
-				this.passthrough(btnStates, stks, trigs, type);
-			}
+		if (!this.passthrough) return;
+
+		for (let i in this.players) {
+			if (contro.id != this.players[i]) continue;
+			this.passthrough({
+				port: i,
+				btns: contro.btnStates,
+				stks: stks,
+				trigs: trigs
+			});
+		}
+	}
+
+	loop() {
+		for (let id in this.contros) {
+			this.pollContro(this.contros[id]);
 		}
 		var _this = this;
-		requestAnimationFrame(function() {
+		requestAnimationFrame(() => {
 			_this.loop();
 		});
+	}
+
+	addContro(contro) {
+		this.players.push(contro.id);
+		contro.pad = navigator.getGamepads()[contro.id] || contro.pad;
+		contro.type = contro.type || 'other';
+		contro.profile = contro.profile || null;
+		contro.disableSticks = false;
+		contro.btnIdxs = contro.btnIdxs || dflt_btnIdxs;
+		contro.axeIdxs = contro.axeIdxs || dflt_axeIdxs;
+		let id = contro.pad.id;
+		if ((/xbox/i).test(id)) {
+			contro.type = 'xbox';
+		} else if (/(ps\d|playstation)/i.test(id)) {
+			contro.type = 'ps';
+		} else if (/(nintendo|wii|switch|joy *con)/i.test(id)) {
+			contro.type = 'nintendo';
+		} else if (/plus/i.test(id)) {
+			let btnIdxs = contro.btnIdxs;
+			btnIdxs.a = 1;
+			btnIdxs.b = 2;
+			btnIdxs.x = 0;
+			btnIdxs.y = 3;
+			btnIdxs.l = 4;
+			btnIdxs.r = 5;
+			btnIdxs.select = 8;
+			btnIdxs.start = 9;
+			contro.type = 'nintendo';
+			contro.subtype = 'switch-pro';
+		}
+		// initialize button states
+		contro.btnStates = {};
+		for (let i in contro.btnIdxs) {
+			contro.btnStates[i] = 0;
+		}
+		contro.stickNue = {
+			x: true,
+			y: true
+		}
+		contro.map = contro.map || {};
+		log('controller detected: ' + id);
+		log('using the ' + contro.type + ' gamepad mapping profile');
+		this.contros[contro.id] = contro;
+		if (this.opt.haptic) {
+			this.vibrate(100, true);
+		}
+		// if (this.onChange) {
+		// 	this.onChange(this.ui, this.uiSub);
+		// }
+		return this.contros[contro.id];
 	}
 
 	start(options) {
 		this.opt = options || {};
 		gamepadMaps = this.opt.gamepadMaps || gamepadMaps;
 		let _this = this;
-		window.addEventListener("gamepadconnected", function(e) {
-			gamepadIdx = e.gamepad.index;
-			_this.gamepadConnection = true;
+		window.addEventListener('gamepadconnected', (e) => {
+			let contro = _this.addContro({
+				id: e.gamepad.index
+			});
+			_this.mapControBtns(contro);
 		});
 		if (this.opt.gca) {
 			this.gca = require('./gca.js');
