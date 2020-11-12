@@ -99,8 +99,11 @@ let gamepadMaps = {
 	}
 };
 let cuis = {};
-let mouse;
-let mouseWheelDeltaNSS;
+let mouse = {
+	"multi": 0.5,
+	"delta": 500,
+	"smooth": require('os').type() == 'Darwin'
+};
 let pos = 0;
 let uiPrevStates = [];
 let uiAfterAlert = '';
@@ -124,28 +127,25 @@ class CUI {
 		this.convertStcksToDpad = false;
 	}
 
-	async passthrough() {
-		log('override this method: cui.passthrough');
-	}
-	async onChange() {
+	async onChange(state, subState) {
 		log('override this method: cui.onChange');
 	}
-	async afterChange() {
+	async afterChange(state, subState) {
 		log('override this method: cui.afterChange');
 	}
 	async onResize() {
 		log('override this method: cui.onResize');
 	}
-	async onAction() {
+	async onAction(act) {
 		log('override this method: cui.onAction');
 	}
-	async onHeldAction() {
+	async onHeldAction(act, timeHeld) {
 		log('override this method: cui.onHeldAction');
 	}
-	beforeMove() {
+	beforeMove($cur, state) {
 		log('override this method: cui.beforeMove');
 	}
-	afterMove() {
+	afterMove($cur, state) {
 		log('override this method: cui.afterMove');
 	}
 
@@ -286,9 +286,12 @@ class CUI {
 		return (cuis[state || this.ui] || {}).$cur || $('');
 	}
 
-	setMouse(mouseInfo, delta) {
-		mouse = mouseInfo;
-		mouseWheelDeltaNSS = delta;
+	setMouseOptions(options) {
+		mouse = options;
+	}
+
+	hasReels(ui) {
+		return $('#' + ui + '.reels').length;
 	}
 
 	scrollTo(position, time) {
@@ -301,7 +304,7 @@ class CUI {
 		time = ((time == undefined) ? 2000 : time);
 
 		let $reels;
-		if (/(main|menu)/i.test(this.ui)) {
+		if (this.hasReels(this.ui)) {
 			$reels = $('#' + this.ui + ' .reel');
 		} else if (/select/i.test(this.ui)) {
 			$reels = $('#' + this.getParent(this.ui) + ' .reel');
@@ -399,9 +402,10 @@ class CUI {
 	}
 
 	/**
-	 * Summary.
+	 * Switch to another state: menu or cui context.
+	 *
 	 * @param {String}  state          state of the UI.
-	 * @param {String}  subState       subState of the UI.
+	 * @param {String}  [subState]       subState of the UI.
 	 * @param {Object}  [options={}]
 	 * @param {Boolean} [options.keepBackground=false]
 	 * @return void
@@ -418,7 +422,7 @@ class CUI {
 		if (this.onChange) {
 			await this.onChange(state, subState || this.uiSub);
 		}
-		if ((/main/gi).test(state)) {
+		if (this.hasReels(state)) {
 			if (!cuis[state].$cur || !$('body').find(cuis[state].$cur).length) {
 				let $mid = $('#' + state + ' .reel.r0').children();
 				$mid = $mid.eq(Math.round($mid.length * .5) - 1);
@@ -431,15 +435,15 @@ class CUI {
 			this.makeCursor(cuis[this.getParent(state)].$cur, state);
 		} else {
 			let $temp;
-			$temp = $(`#${state}.row-y`).eq(0).find('.uie').eq(0);
+			$temp = $(`#${state}.row-y`).eq(0).find('.cui').eq(0);
 			if (!$temp.length) {
-				$temp = $(`#${state}.row-x`).eq(0).find('.uie').eq(0);
+				$temp = $(`#${state}.row-x`).eq(0).find('.cui').eq(0);
 			}
 			if (!$temp.length) {
-				$temp = $(`#${state} .row-y`).eq(0).find('.uie').eq(0);
+				$temp = $(`#${state} .row-y`).eq(0).find('.cui').eq(0);
 			}
 			if (!$temp.length) {
-				$temp = $(`#${state} .row-x`).eq(0).find('.uie').eq(0);
+				$temp = $(`#${state} .row-x`).eq(0).find('.cui').eq(0);
 			}
 			this.makeCursor($temp, state);
 		}
@@ -455,7 +459,6 @@ class CUI {
 			/menu/i.test(this.ui) &&
 			(!cuis[this.ui].keepBackground || isChild) &&
 			(!/select/i.test(state) || isChild)) {
-			// $('.cui:not(.main)').hide();
 			$('#' + this.ui).hide();
 			$('.' + this.ui).hide();
 		} else {
@@ -474,13 +477,13 @@ class CUI {
 	addListeners(id) {
 		if (!id) id = '';
 		var _this = this;
-		$(id + ' .uie').click(function() {
+		$(id + ' .cui').click(function() {
 			let classes = $(this).attr('class').split(' ');
-			if (classes.includes('uie-disabled')) return;
+			if (classes.includes('cui-disabled')) return;
 			_this.makeCursor($(this));
 			_this.buttonPressed('a');
 		});
-		$(id + ' .uie').hover(function() {
+		$(id + ' .cui').hover(function() {
 			if (!cuis[_this.ui].hoverCurDisabled &&
 				$(this).parents('#' + _this.ui).length) {
 				_this.makeCursor($(this));
@@ -497,11 +500,11 @@ class CUI {
 		if (inVerticalRow) {
 			curX = $rowX.find('.row-y').index($rowY);
 			maxX = $rowX.find('.row-y').length;
-			curY = $rowY.find('.uie').index($cur);
-			maxY = $rowY.find('.uie').length;
+			curY = $rowY.find('.cui').index($cur);
+			maxY = $rowY.find('.cui').length;
 		} else {
-			curX = $rowX.find('.uie').index($cur);
-			maxX = $rowX.find('.uie').length;
+			curX = $rowX.find('.cui').index($cur);
+			maxX = $rowX.find('.cui').length;
 			curY = $rowY.find('.row-x').index($rowX);
 			maxY = $rowY.find('.row-x').length;
 		}
@@ -549,16 +552,16 @@ class CUI {
 
 		if (inVerticalRow) {
 			if (x == curX) {
-				ret.$cur = $rowY.find('.uie').eq(y);
+				ret.$cur = $rowY.find('.cui').eq(y);
 			} else {
 				if (!$rowX.length) return;
 				ret.$rowY = $rowX.find('.row-y').eq(x);
 				if (!ret.$rowY.length) return;
 				let curRect = $cur.get(0).getBoundingClientRect();
-				let rowYLength = ret.$rowY.find('.uie').length;
+				let rowYLength = ret.$rowY.find('.cui').length;
 				if (y >= rowYLength) y = Math.floor(rowYLength / 2);
 				while (y < rowYLength && y >= 0) {
-					ret.$cur = ret.$rowY.find('.uie').eq(y);
+					ret.$cur = ret.$rowY.find('.cui').eq(y);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
 					let diff = (curRect.top - elmRect.top) / scale;
 					let halfHeight = Math.max($cur.height(), ret.$cur.height()) * .6;
@@ -573,16 +576,16 @@ class CUI {
 			}
 		} else {
 			if (y == curY) {
-				ret.$cur = $rowX.find('.uie').eq(x);
+				ret.$cur = $rowX.find('.cui').eq(x);
 			} else {
 				if (!$rowY.length) return;
 				ret.$rowX = $rowY.find('.row-x').eq(y);
 				if (!ret.$rowX.length) return;
 				let curRect = $cur.get(0).getBoundingClientRect();
-				let rowXLength = ret.$rowX.find('.uie').length;
+				let rowXLength = ret.$rowX.find('.cui').length;
 				if (x >= rowXLength) x = Math.floor(rowXLength / 2);
 				while (x < rowXLength && x >= 0) {
-					ret.$cur = ret.$rowX.find('.uie').eq(x);
+					ret.$cur = ret.$rowX.find('.cui').eq(x);
 					let elmRect = ret.$cur.get(0).getBoundingClientRect();
 					let diff = (curRect.left - elmRect.left) / scale;
 					let halfWidth = Math.max($cur.width(), ret.$cur.width()) * .6;
@@ -783,7 +786,7 @@ class CUI {
 	}
 
 	makePlayer1(contro) {
-		disconnectPlayer(contro);
+		this.disconnectPlayer(contro);
 		this.players.unshift(contro.id);
 	}
 
@@ -799,7 +802,7 @@ class CUI {
 		contro.pad = navigator.getGamepads()[contro.id];
 		// gamepad disconnected
 		if (!contro.pad) {
-			disconnectPlayer(contro);
+			this.disconnectPlayer(contro);
 			return;
 		}
 		let btns = {};
@@ -904,41 +907,41 @@ class CUI {
 	};
 
 	bind(binding, act) {
-		if (binding == 'wheel') {
-			window.addEventListener('wheel', (event) => {
-				event.preventDefault();
-				event.stopPropagation();
-				if ($('.uie.selected').length) return false;
-				let scrollDelta = event.deltaY;
-				// log(event);
-				if (mouse.wheel.smooth) {
-					pos += scrollDelta * mouse.wheel.multi;
-				} else {
-					if (scrollDelta < 0) {
-						pos += mouseWheelDeltaNSS;
-					} else {
-						pos -= mouseWheelDeltaNSS;
-					}
-				}
-				this.scrollTo(pos, ((!mouse.wheel.smooth) ? 1500 : 0));
-				return false;
-			}, {
-				passive: false
-			});
-		} else {
-			Mousetrap.bind(binding, () => {
-				if (/(up|down|left|right)/.test(act)) {
-					this.move(act);
-				} else {
-					this.doAction(act);
-				}
-				return false;
-			});
-		}
+		Mousetrap.bind(binding, () => {
+			if (/(up|down|left|right)/.test(act)) {
+				this.move(act);
+			} else {
+				this.doAction(act);
+			}
+			return false;
+		});
 	}
 
-	click(elem, act) {
-		$(elem).click(() => {
+	bindWheel($reels) {
+		$reels[0].addEventListener('wheel', (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			if ($('.cui.selected').length) return false;
+			let scrollDelta = event.deltaY;
+			// log(event);
+			if (mouse.wheel.smooth) {
+				pos += scrollDelta * mouse.wheel.multi;
+			} else {
+				if (scrollDelta < 0) {
+					pos += mouse.wheel.delta;
+				} else {
+					pos -= mouse.wheel.delta;
+				}
+			}
+			this.scrollTo(pos, ((!mouse.wheel.smooth) ? 1500 : 0));
+			return false;
+		}, {
+			passive: false
+		});
+	}
+
+	click($elem, act) {
+		$elem.click(() => {
 			this.buttonPressed(act);
 		});
 		// $(elem).bind('mouseheld', function(e) {
@@ -955,7 +958,7 @@ class CUI {
 			$('body').prepend(`
 				<div class="menu" id="alertMenu_9999">
   				<div class="row-y">
-        		<div class="uie opt0" name="alert-okay">Okay</div>
+        		<div class="cui opt0" name="alert-okay">Okay</div>
     			</div>
 				</div>`);
 			$alertMenu = $('#alertMenu_9999');

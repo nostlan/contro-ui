@@ -33,5 +33,5 @@
     "postversion": "git push",
     "V": "npm version minor --force"
   },
-  "version": "2.0.39"
+  "version": "2.0.40"
 }
