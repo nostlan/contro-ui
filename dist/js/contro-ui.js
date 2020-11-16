@@ -123,6 +123,9 @@ class CUI {
 		// array of players' contro id
 		this.players = [];
 		this.contros = {};
+		this.keyboard = {
+			bound: {}
+		};
 		this.context = 'PC';
 		this.convertStcksToDpad = false;
 	}
@@ -401,6 +404,15 @@ class CUI {
 		}
 	}
 
+	setUISub(subState, appendSubState) {
+		if (!subState) return;
+		if (!appendSubState) {
+			$('body').removeClass(this.uiSub);
+		}
+		$('body').addClass(subState);
+		this.uiSub = subState;
+	}
+
 	/**
 	 * Switch to another state: menu or cui context.
 	 *
@@ -449,10 +461,6 @@ class CUI {
 		}
 		$('body').removeClass(this.ui);
 		$('body').addClass(state);
-		if (subState) {
-			$('body').removeClass(this.uiSub);
-			$('body').addClass(subState);
-		}
 		this.resize(true, state);
 		let isChild = !this.isParent(this.ui, state);
 		if (this.ui && !options.keepBackground &&
@@ -465,7 +473,7 @@ class CUI {
 			// log('keeping prev ui in background');
 		}
 		this.ui = state;
-		this.uiSub = subState || this.uiSub;
+		this.setUISub(subState);
 		if (this.opt.v) {
 			log(this.uiPrev + ' to ' + state);
 		}
@@ -824,6 +832,7 @@ class CUI {
 		this.parse(contro, btns, stks, trigs);
 	}
 
+
 	loop() {
 		for (let id in this.contros) {
 			this.pollContro(this.contros[id]);
@@ -906,15 +915,86 @@ class CUI {
 		$(window).resize(this.resize);
 	};
 
-	bind(binding, act) {
-		Mousetrap.bind(binding, () => {
-			if (/(up|down|left|right)/.test(act)) {
-				this.move(act);
-			} else {
-				this.doAction(act);
+	// bind key to bindings
+	keyPress(key, bindings) {
+		if (typeof bindings == 'string') {
+			bindings = [{
+				state: 'default',
+				act: bindings
+			}];
+		} else if (!Array.isArray(bindings)) {
+			bindings = [bindings];
+		}
+
+		for (let binding of bindings) {
+			binding.state = binding.state || 'default';
+			if (!this.keyboard[binding.state]) {
+				this.keyboard[binding.state] = {
+					keys: {},
+					contros: []
+				};
 			}
+			this.keyboard[binding.state].keys[key] = {
+				press: 0,
+				act: binding.act,
+				port: binding.port
+			}
+		}
+		// no need to rebind key
+		if (this.keyboard.bound[key]) return;
+
+		Mousetrap.bind(key, () => {
+			let state = this.ui;
+			if (!this.keyboard[state]) state = this.uiSub;
+			if (!this.keyboard[state]) state = 'default';
+			if (!this.keyboard[state]) return false;
+			let keys = this.keyboard[state].keys;
+			if (!keys[key]) keys[key] = {};
+			let k = keys[key];
+			k.press += 1;
+
+			if (k.press == 1 && k.act) {
+				if (/(up|down|left|right)/.test(k.act)) {
+					this.move(k.act);
+				} else {
+					this.doAction(k.act);
+				}
+			} else if (k.act) {
+				this.doHeldAction(k.act, k.press * 86);
+			}
+			if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+				return false;
+			}
+			if (!this.keyboard[state].contros[k.port]) {
+				this.keyboard[state].contros[k.port] = {
+					port: k.port
+				};
+			}
+			let contro = this.keyboard[state].contros[k.port];
+			if (!contro.btns) contro.btns = {};
+			contro.btns[k.act] = k.press;
+			this.passthrough(contro);
 			return false;
-		});
+		}, 'keydown');
+
+		Mousetrap.bind(key, () => {
+			let state = this.ui;
+			if (!this.keyboard[state]) state = this.uiSub;
+			if (!this.keyboard[state]) state = 'default';
+			if (!this.keyboard[state]) return false;
+			let k = this.keyboard[state].keys[key];
+			if (!k) return false;
+			k.press = 0;
+
+			if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+				return false;
+			}
+			let contro = this.keyboard[state].contros[k.port];
+			contro.btns[k.act] = 0;
+			this.passthrough(contro);
+			return false;
+		}, 'keyup');
+		this.keyboard.bound[key] = true;
 	}
 
 	bindWheel($reels) {
