@@ -161,9 +161,11 @@ class CUI {
 		};
 		// mouse preferences
 		this.mouse = {
-			"multi": 0.5,
-			"delta": 500,
-			"smooth": require('os').type() == 'Darwin'
+			wheel: {
+				"multi": 1,
+				"delta": 500,
+				"smooth": require('os').type() == 'Darwin'
+			}
 		};
 		// current context (for controller mapping)
 		this.context = 'PC';
@@ -1084,16 +1086,7 @@ class CUI {
 			event.stopPropagation();
 			if ($('.cui.selected').length) return false;
 			let scrollDelta = event.deltaY;
-			// log(event);
-			if (this.mouse.wheel.smooth) {
-				pos += scrollDelta * this.mouse.wheel.multi;
-			} else {
-				if (scrollDelta < 0) {
-					pos += this.mouse.wheel.delta;
-				} else {
-					pos -= this.mouse.wheel.delta;
-				}
-			}
+			pos += scrollDelta * this.mouse.wheel.multi;
 			this.scrollTo(pos, ((!this.mouse.wheel.smooth) ? 1500 : 0));
 			return false;
 		}, {
