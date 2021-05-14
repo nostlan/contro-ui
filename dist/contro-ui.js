@@ -9,6 +9,8 @@ let dflt_btnIdxs = {
 	y: 3,
 	l: 4,
 	r: 5,
+	lt: 6,
+	rt: 7,
 	select: 8,
 	start: 9,
 	// leftStickBtn: 10,
@@ -27,8 +29,8 @@ let dflt_axeIdxs = {
 		x: 2,
 		y: 3
 	},
-	// leftTrigger: 4,
-	// rightTrigger: 5,
+	leftTrigger: 4,
+	rightTrigger: 5,
 	dpad: 6 // switch pro only
 };
 let dpadVals = {
@@ -728,6 +730,10 @@ class CUI {
 			case 'b':
 			case 'x':
 			case 'y':
+			case 'l':
+			case 'r':
+			case 'lt':
+			case 'rt':
 			case 'select':
 			case 'start':
 				await this.doAction(lbl);
@@ -749,14 +755,18 @@ class CUI {
 			lbl = 'select';
 		}
 		switch (lbl) {
-			case 'a':
 			case 'up':
 			case 'down':
 			case 'left':
 			case 'right':
+			case 'a':
 			case 'b':
 			case 'x':
 			case 'y':
+			case 'l':
+			case 'r':
+			case 'lt':
+			case 'rt':
 			case 'select':
 			case 'start':
 				await this.doHeldAction(lbl, timeHeld);
@@ -838,6 +848,20 @@ class CUI {
 		}
 	}
 
+	parseTrigs(contro, trigs) {
+		if (typeof trigs.left == 'undefined') return;
+		if (trigs.left > 0.9) {
+			contro.btnStates.lt++;
+		} else {
+			contro.btnStates.lt = 0;
+		}
+		if (trigs.right > 0.9) {
+			contro.btnStates.rt++;
+		} else {
+			contro.btnStates.rt = 0;
+		}
+	}
+
 	parse(contro, btns, stks, trigs) {
 		if (!this.contros[contro.id]) {
 			contro = this.addContro(contro);
@@ -847,6 +871,7 @@ class CUI {
 		}
 		this.parseBtns(contro, btns);
 		this.sticks(contro, stks);
+		this.parseTrigs(contro, trigs);
 
 		if (!this.passthrough) return;
 
@@ -911,7 +936,10 @@ class CUI {
 				y: pad.axes[contro.axeIdxs.leftStick.y]
 			}
 		};
-		let trigs;
+		let trigs = {
+			left: pad.axes[contro.axeIdxs.leftTrigger],
+			right: pad.axes[contro.axeIdxs.rightTrigger]
+		};
 		this.parse(contro, btns, stks, trigs);
 	}
 

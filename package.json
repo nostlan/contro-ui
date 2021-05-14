@@ -7,12 +7,12 @@
     }
   ],
   "dependencies": {},
-  "entry point": "./dist/js/contro-ui.js",
+  "entry point": "./dist/contro-ui.js",
   "keywords": [
     "pkg"
   ],
   "license": "MIT",
-  "main": "./dist/js/contro-ui.js",
+  "main": "./dist/contro-ui.js",
   "maintainers": [
     {
       "name": "Quinton Ashley",
@@ -33,5 +33,5 @@
     "postversion": "git push",
     "V": "npm version minor --force"
   },
-  "version": "3.0.2"
+  "version": "3.1.0"
 }
