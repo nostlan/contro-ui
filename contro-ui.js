@@ -301,6 +301,9 @@ class CUI {
 			if (!act) await this.doAction('back');
 		} else if (act == 'back') {
 			await this.change(this.getParent());
+		} else if (act == 'doubleBack') {
+			act = this.getParent(this.getParent());
+			await this.change(act);
 		} else {
 			if (act == 'a' || act == 'enter') {
 				act = this.$cursor.attr('name') || 'a';
