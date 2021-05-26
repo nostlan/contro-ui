@@ -294,15 +294,19 @@ class CUI {
 			if (act == 'quit') {
 				return await this.doAction('quit');
 			}
-			if (act == 'doubleBack') {
-				act = this.getParent(this.getParent());
+			if (!act) {
+				act = 'back';
+			} else if (act != 'doubleBack' || act != 'back') {
+				await this.change(act);
+				return;
 			}
-			if (act) await this.change(act);
-			if (!act) await this.doAction('back');
-		} else if (act == 'back') {
+		}
+		if (act == 'back') {
 			await this.change(this.getParent());
 		} else if (act == 'doubleBack') {
-			act = this.getParent(this.getParent());
+			act = this.getParent();
+			this[act].$elem.hide();
+			act = this.getParent(act);
 			await this.change(act);
 		} else {
 			if (act == 'a' || act == 'enter') {
