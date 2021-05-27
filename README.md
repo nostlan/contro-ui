@@ -1,7 +1,6 @@
 # contro-ui
 
-requires jQuery and Mousetrap
-optionally uses gca-js for Gamecube controller support
+This UI library is used by [Nostlan](https://github.com/quinton-ashley/nostlan) to create a UI that can be interacted with via game controllers and/or mouse and keyboard. It requires jQuery and Mousetrap. Optionally you can install `gca-js` as a peer dependency for Gamecube controller support.
 
 ```javascript
 global.cui = require("contro-ui");
@@ -12,24 +11,26 @@ cui.start();
 doctype html
 html
   head
-    title Your App
+    title Your App's Title
     meta(charset='utf-8')
     link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
     link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
   body
     #nameOfMenu.menu.row-y
-      //- full width menu button
-      .cui.col(name='actionName0') button label
+      //- full width button
+      .cui.col(name='actionName0') button 0 label text
       .row.row-x
         //- three buttons in horizontal row
-        .cui.col(name='actionName1') other button label
-        .cui.col(name='actionName1') other button label
-        .cui.col(name='actionName1') other button label
+        .cui.col(name='actionName1') button 1 label text
+        .cui.col(name='actionName2') button 2 label text
+        .cui.col(name='actionName3') button 3 label text
     #otherMenu.menu.row-y
       //- ...
 ```
 
 ## API
+
+_Experimental UI library!_
 
 ### start(Object options)
 
@@ -155,4 +156,4 @@ Override this method to adjust ui components on resize.
 
 ### passthrough(Object contro)
 
-Override this function to access the contro object directly, which has parsed controller button, stick, and trigger info.
+Override this function to access the contro object directly, which has the parsed controller button, stick, and trigger info.
