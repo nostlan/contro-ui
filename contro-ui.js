@@ -464,10 +464,13 @@ class CUI {
 	}
 
 	editView(state, options) {
+		options = options || {};
+		let _state = state;
+		state = state.split('_')[0];
 		if (!this[state]) {
-			this[state] = new this.State(state);
+			this[state] = new this.State(_state);
 		} else {
-			this[state].init(state);
+			this[state].init(_state);
 		}
 		Object.assign(this[state], options);
 	}
@@ -580,10 +583,19 @@ class CUI {
 		}
 		const _this = this;
 		$(id + ' .cui').click(function() {
+			if (!_this[_this.ui].clickCurDisabled) {
+				let classes = $(this).attr('class').split(' ');
+				if (classes.includes('cui-disabled')) return;
+				_this.makeCursor($(this));
+			} else if (!_this[_this.ui].clickCurAct) {
+				return;
+			}
 			let classes = $(this).attr('class').split(' ');
-			if (classes.includes('cui-disabled')) return;
-			_this.makeCursor($(this));
-			_this.buttonPressed('a');
+			if (classes.includes('cursor')) {
+				_this.buttonPressed('a');
+			} else {
+				_this.buttonPressed(_this[_this.ui].clickCurAct || 'a');
+			}
 		});
 		$(id + ' .cui').hover(function() {
 			if (!_this[_this.ui].hoverCurDisabled &&
