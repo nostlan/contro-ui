@@ -583,18 +583,14 @@ class CUI {
 		}
 		const _this = this;
 		$(id + ' .cui').click(function() {
-			if (!_this[_this.ui].clickCurDisabled) {
-				let classes = $(this).attr('class').split(' ');
-				if (classes.includes('cui-disabled')) return;
-				_this.makeCursor($(this));
-			} else if (!_this[_this.ui].clickCurAct) {
-				return;
-			}
+			if (_this[_this.ui].clickCurDisabled) return;
 			let classes = $(this).attr('class').split(' ');
-			if (classes.includes('cursor')) {
+			if (classes.includes('cui-disabled')) return;
+			if (classes.includes('cursor') || _this[_this.ui].hoverCurDisabled) {
+				_this.makeCursor($(this));
 				_this.buttonPressed('a');
 			} else {
-				_this.buttonPressed(_this[_this.ui].clickCurAct || 'a');
+				_this.buttonPressed('b');
 			}
 		});
 		$(id + ' .cui').hover(function() {
