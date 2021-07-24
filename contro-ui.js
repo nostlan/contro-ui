@@ -582,7 +582,7 @@ class CUI {
 			id = '#' + id;
 		}
 		const _this = this;
-		$(id + ' .cui').click(function() {
+		$(id + ' .cui').click(function () {
 			if (_this[_this.ui].clickCurDisabled) return;
 			let classes = $(this).attr('class').split(' ');
 			if (classes.includes('cui-disabled')) return;
@@ -593,7 +593,7 @@ class CUI {
 				_this.buttonPressed('b');
 			}
 		});
-		$(id + ' .cui').hover(function() {
+		$(id + ' .cui').hover(function () {
 			if (!_this[_this.ui].hoverCurDisabled &&
 				$(this).parents('#' + _this.id).length) {
 				_this.makeCursor($(this));
@@ -1029,8 +1029,9 @@ class CUI {
 			_this.mapControBtns(contro);
 		});
 		if (this.opt.gca) {
-			this.gca = require('./gca.js');
 			try {
+				this.gca = {};
+				this.gca = require('./gca.js');
 				this.gca.init();
 			} catch (ror) {
 				er(ror);
