@@ -98,6 +98,11 @@
 	margin-right: 5px;
 }
 
+.menu .row-x .cui:only-child {
+	margin-left: 0;
+	margin-right: 0;
+}
+
 .menu .cursor {
 	filter: brightness(1.2);
 }

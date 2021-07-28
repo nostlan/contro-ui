@@ -310,7 +310,13 @@ class CUI {
 			await this.change(act);
 		} else {
 			if (act == 'a' || act == 'enter') {
-				act = this.$cursor.attr('name') || 'a';
+				act = 'a';
+				if (this.$cursor && this.$cursor.length) {
+					act = this.$cursor.attr('name') || 'a';
+					this.$cursor.addClass('active');
+					await delay(100);
+					this.$cursor.removeClass('active');
+				}
 			}
 			if (this.opt.v) {
 				log('cui: ' + act + ' on ' + this[this.ui].id);
@@ -1182,6 +1188,7 @@ class CUI {
 	}
 
 	async error(msg, code, stateAfterError) {
+		console.error(msg);
 		let title;
 		if (typeof code == 'string') {
 			title = code;
