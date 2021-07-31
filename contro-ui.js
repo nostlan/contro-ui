@@ -296,7 +296,7 @@ class CUI {
 			}
 			if (!act) {
 				act = 'back';
-			} else if (act != 'doubleBack' || act != 'back') {
+			} else if (act != 'doubleBack' && act != 'back') {
 				await this.change(act);
 				return;
 			}
