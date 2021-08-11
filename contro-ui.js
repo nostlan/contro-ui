@@ -801,6 +801,7 @@ class CUI {
 	parseBtns(contro, btns) {
 		for (let i in btns) {
 			let btn = btns[i];
+			if (!btn) continue;
 			let query;
 			// incomplete maps are okay
 			// no one to one mapping necessary
@@ -989,10 +990,10 @@ class CUI {
 			contro.type = 'ps';
 		} else if (/(nintendo|wii|switch|joy *con)/i.test(id)) {
 			contro.type = 'nintendo';
-		} else if (/plus/i.test(id)) {
+		} else if (/(plus|Vendor: 20d6 Product: a711)/i.test(id)) {
 			let btnIdxs = contro.btnIdxs;
-			btnIdxs.a = 1;
-			btnIdxs.b = 2;
+			btnIdxs.a = 2;
+			btnIdxs.b = 1;
 			btnIdxs.x = 0;
 			btnIdxs.y = 3;
 			btnIdxs.l = 4;
@@ -1013,7 +1014,7 @@ class CUI {
 		}
 		contro.map = contro.map || {};
 		log('cui: controller detected: ' + id);
-		log('cui: using the ' + contro.type + ' gamepad mapping profile');
+		log('cui: using the ' + contro.type + ':' + contro.subtype + ' gamepad mapping profile');
 		this.contros[contro.id] = contro;
 		if (this.opt.haptic) {
 			this.vibrate(100, true);
