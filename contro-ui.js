@@ -164,9 +164,9 @@ class CUI {
 		// mouse preferences
 		this.mouse = {
 			wheel: {
-				"multi": 1,
-				"delta": 500,
-				"smooth": require('os').type() == 'Darwin'
+				multi: 1,
+				delta: 500,
+				smooth: require('os').type() == 'Darwin'
 			}
 		};
 		// current context (for controller mapping)
@@ -252,12 +252,7 @@ class CUI {
 		// normalize X and Y to nintendo physical layout
 		// this will make the physical layout of an app constant
 		// and doAction choices constant for certain buttons
-		if (this.opt.normalize &&
-			((this.opt.normalize.disable &&
-					!(new RegExp(`(${this.opt.normalize.disable})`, 'i')).test(gm.profile)) ||
-				(this.opt.normalize.enable &&
-					(new RegExp(`(${this.opt.normalize.enable})`, 'i')).test(gm.profile))
-			)) {
+		if (this.opt.normalize && ((this.opt.normalize.disable && !new RegExp(`(${this.opt.normalize.disable})`, 'i').test(gm.profile)) || (this.opt.normalize.enable && new RegExp(`(${this.opt.normalize.enable})`, 'i').test(gm.profile)))) {
 			for (let i in this.opt.normalize.map) {
 				contro.map[i] = gm.map[this.opt.normalize.map[i]] || this.opt.normalize.map[i];
 			}
@@ -273,11 +268,11 @@ class CUI {
 	}
 
 	isParent(ui, state) {
-		return ((ui) ? this[ui].level : 0) < this[state].level;
+		return (ui ? this[ui].level : 0) < this[state].level;
 	}
 
 	getParent(ui) {
-		ui = (ui) ? ui : this.ui;
+		ui = ui ? ui : this.ui;
 		let curLevel = this[ui].level;
 		for (let i = this.history.length - 1; i >= 0; i--) {
 			if (ui == this.history[i]) continue;
@@ -343,10 +338,9 @@ class CUI {
 
 	async resize(adjust, state) {
 		state = state || this.ui;
-		if ((/menu|select/i).test(state)) {
+		if (/menu|select/i.test(state)) {
 			let $menu = this[state].$elem;
-			$menu.css('margin-top',
-				window.innerHeight * .5 - $menu.outerHeight() * .5);
+			$menu.css('margin-top', window.innerHeight * 0.5 - $menu.outerHeight() * 0.5);
 		}
 		if (this.onResize) {
 			await this.onResize(adjust);
@@ -375,7 +369,7 @@ class CUI {
 		}
 		pos = position;
 		// if (this.opt.v) log(pos.toFixed(1));
-		time = ((time == undefined) ? 2000 : time);
+		time = time == undefined ? 2000 : time;
 
 		let $reels;
 		if (this.hasReels(this.ui)) {
@@ -388,14 +382,19 @@ class CUI {
 		for (let i = 0; i < $reels.length; i++) {
 			let $reel = $reels.eq(i);
 			let reelPos = pos;
-			if ($reel.hasClass('reverse')) { // is reverse
+			if ($reel.hasClass('reverse')) {
+				// is reverse
 				reelPos = $reels.eq(1)[0].scrollHeight - window.innerHeight - pos;
 			}
 
 			if (time != 0) {
-				$reel.stop().animate({
-					scrollTop: reelPos
-				}, time, 'swing');
+				$reel.stop().animate(
+					{
+						scrollTop: reelPos
+					},
+					time,
+					'swing'
+				);
 			} else {
 				$reel[0].scrollTop = reelPos;
 			}
@@ -412,17 +411,16 @@ class CUI {
 		for (let i = 0; i < $cursor.index(); i++) {
 			position += $reel.children().eq(i).height();
 		}
-		position += $cursor.height() * .5;
+		position += $cursor.height() * 0.5;
 		if ($reel.hasClass('reverse')) {
 			position = $reels.eq(1)[0].scrollHeight - window.innerHeight - position;
-			position += window.innerHeight * .5;
+			position += window.innerHeight * 0.5;
 		} else {
-			position -= window.innerHeight * .5;
+			position -= window.innerHeight * 0.5;
 		}
 		let scrollDist = Math.abs(pos - position);
-		if (minDistance == null) minDistance = .4;
-		if (!(/select/i).test(this.ui) &&
-			scrollDist < window.innerHeight * minDistance) return;
+		if (minDistance == null) minDistance = 0.4;
+		if (!/select/i.test(this.ui) && scrollDist < window.innerHeight * minDistance) return;
 		let sTime;
 		if (time > -1) {
 			sTime = time || 1;
@@ -484,7 +482,7 @@ class CUI {
 	removeView(state) {
 		if (!this[state].$elem) return;
 		this[state].$elem.empty();
-		if ((/main/i).test(state)) {
+		if (/main/i.test(state)) {
 			this.uiPrev = null;
 		}
 	}
@@ -533,7 +531,7 @@ class CUI {
 		if (this.hasReels(state)) {
 			if (!this[state] || !this[state].$cursor || !$('body').find(this[state].$cursor).length) {
 				let $mid = $(`#${id} .reel.r0`).children();
-				$mid = $mid.eq(Math.round($mid.length * .5) - 1);
+				$mid = $mid.eq(Math.round($mid.length * 0.5) - 1);
 				this.makeCursor($mid, state);
 			} else {
 				this.makeCursor(this[state].$cursor, state);
@@ -559,10 +557,7 @@ class CUI {
 		$('body').addClass(state);
 		this.resize(true, state);
 		let isChild = !this.isParent(this.ui, state);
-		if (this.ui && !options.keepBackground &&
-			/menu/i.test(this.ui) &&
-			(!this[this.ui].keepBackground || isChild) &&
-			(!/select/i.test(state) || isChild)) {
+		if (this.ui && !options.keepBackground && /menu/i.test(this.ui) && (!this[this.ui].keepBackground || isChild) && (!/select/i.test(state) || isChild)) {
 			this[this.ui].$elem.hide();
 		} else {
 			// log('cui: keeping prev ui in background');
@@ -600,8 +595,7 @@ class CUI {
 			}
 		});
 		$(id + ' .cui').hover(function () {
-			if (!_this[_this.ui].hoverCurDisabled &&
-				$(this).parents('#' + _this.id).length) {
+			if (!_this[_this.ui].hoverCurDisabled && $(this).parents('#' + _this.id).length) {
 				_this.makeCursor($(this));
 			}
 		});
@@ -680,7 +674,7 @@ class CUI {
 					ret.$cursor = ret.$rowY.find('.cui').eq(y);
 					let elmRect = ret.$cursor.get(0).getBoundingClientRect();
 					let diff = (curRect.top - elmRect.top) / scale;
-					let halfHeight = Math.max($cursor.height(), ret.$cursor.height()) * .6;
+					let halfHeight = Math.max($cursor.height(), ret.$cursor.height()) * 0.6;
 					if (halfHeight < diff) {
 						y++;
 					} else if (-halfHeight > diff) {
@@ -704,7 +698,7 @@ class CUI {
 					ret.$cursor = ret.$rowX.find('.cui').eq(x);
 					let elmRect = ret.$cursor.get(0).getBoundingClientRect();
 					let diff = (curRect.left - elmRect.left) / scale;
-					let halfWidth = Math.max($cursor.width(), ret.$cursor.width()) * .6;
+					let halfWidth = Math.max($cursor.width(), ret.$cursor.width()) * 0.6;
 					if (halfWidth < diff) {
 						x++;
 					} else if (-halfWidth > diff) {
@@ -810,15 +804,12 @@ class CUI {
 			if (contro.subtype != 'switch-pro' || !isDpadBtn) {
 				query = btn.pressed;
 			} else {
-				query = (Math.abs(dpadVals[i] - contro.pad.axes[9]) < 0.1);
+				query = Math.abs(dpadVals[i] - contro.pad.axes[9]) < 0.1;
 			}
 			// if button is not pressed, query is false and unchanged
 			if (!contro.btnStates[i] && !query) continue;
 			// if button press ended query is false
-			if (!query &&
-				(!isDpadBtn || !this.convertStcksToDpad ||
-					(/(up|down)/.test(i) && contro.stickNue.y) ||
-					(/(left|right)/.test(i) && contro.stickNue.x))) {
+			if (!query && (!isDpadBtn || !this.convertStcksToDpad || (/(up|down)/.test(i) && contro.stickNue.y) || (/(left|right)/.test(i) && contro.stickNue.x))) {
 				// log(i + ' button press end');
 				contro.btnStates[i] = 0;
 				continue;
@@ -843,25 +834,25 @@ class CUI {
 		let didMove = false;
 		let vect = stks.left;
 		let stickNue = contro.stickNue;
-		if (vect.y < -.5) {
+		if (vect.y < -0.5) {
 			// used to move in contro-ui menus
 			if (stickNue.y) this.move('up');
 			// converts stick movement to dpad button presses
 			// when using passthrough for certain contexts
 			if (this.convertStcksToDpad) contro.btnStates.up++;
 			stickNue.y = false;
-		} else if (vect.y > .5) {
+		} else if (vect.y > 0.5) {
 			if (stickNue.y) this.move('down');
 			if (this.convertStcksToDpad) contro.btnStates.down++;
 			stickNue.y = false;
 		} else {
 			stickNue.y = true;
 		}
-		if (vect.x < -.5) {
+		if (vect.x < -0.5) {
 			if (stickNue.x) this.move('left');
 			if (this.convertStcksToDpad) contro.btnStates.left++;
 			stickNue.x = false;
-		} else if (vect.x > .5) {
+		} else if (vect.x > 0.5) {
 			if (stickNue.x) this.move('right');
 			if (this.convertStcksToDpad) contro.btnStates.right++;
 			stickNue.x = false;
@@ -965,7 +956,6 @@ class CUI {
 		this.parse(contro, btns, stks, trigs);
 	}
 
-
 	loop() {
 		for (let id in this.contros) {
 			this.pollContro(this.contros[id]);
@@ -984,7 +974,7 @@ class CUI {
 		contro.btnIdxs = contro.btnIdxs || dflt_btnIdxs;
 		contro.axeIdxs = contro.axeIdxs || dflt_axeIdxs;
 		let id = contro.pad.id;
-		if ((/xbox/i).test(id)) {
+		if (/xbox/i.test(id)) {
 			contro.type = 'xbox';
 		} else if (/(ps\d|playstation)/i.test(id)) {
 			contro.type = 'ps';
@@ -1011,7 +1001,7 @@ class CUI {
 		contro.stickNue = {
 			x: true,
 			y: true
-		}
+		};
 		contro.map = contro.map || {};
 		log('cui: controller detected: ' + id);
 		log('cui: using the ' + contro.type + ':' + contro.subtype + ' gamepad mapping profile');
@@ -1047,15 +1037,17 @@ class CUI {
 		this.addListeners();
 		this.loop();
 		$(window).resize(this.resize);
-	};
+	}
 
 	// bind key to bindings
 	keyPress(key, bindings) {
 		if (typeof bindings == 'string') {
-			bindings = [{
-				state: 'default',
-				act: bindings
-			}];
+			bindings = [
+				{
+					state: 'default',
+					act: bindings
+				}
+			];
 		} else if (!Array.isArray(bindings)) {
 			bindings = [bindings];
 		}
@@ -1072,77 +1064,89 @@ class CUI {
 				press: 0,
 				act: binding.act,
 				port: binding.port
-			}
+			};
 		}
 		// no need to rebind key
 		if (this.keyboard.bound[key]) return;
 
-		Mousetrap.bind(key, () => {
-			let state = this.ui;
-			if (!this.keyboard[state]) state = this.uiSub;
-			if (!this.keyboard[state]) state = 'default';
-			if (!this.keyboard[state]) return false;
-			let keys = this.keyboard[state].keys;
-			if (!keys[key]) keys[key] = {};
-			let k = keys[key];
-			k.press += 1;
+		Mousetrap.bind(
+			key,
+			() => {
+				let state = this.ui;
+				if (!this.keyboard[state]) state = this.uiSub;
+				if (!this.keyboard[state]) state = 'default';
+				if (!this.keyboard[state]) return false;
+				let keys = this.keyboard[state].keys;
+				if (!keys[key]) keys[key] = {};
+				let k = keys[key];
+				k.press += 1;
 
-			if (k.press == 1 && k.act) {
-				if (/(up|down|left|right)/.test(k.act)) {
-					this.move(k.act);
-				} else {
-					this.doAction(k.act);
+				if (k.press == 1 && k.act) {
+					if (/(up|down|left|right)/.test(k.act)) {
+						this.move(k.act);
+					} else {
+						this.doAction(k.act);
+					}
+				} else if (k.act) {
+					this.doHeldAction(k.act, k.press * 86);
 				}
-			} else if (k.act) {
-				this.doHeldAction(k.act, k.press * 86);
-			}
-			if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+				if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+					return false;
+				}
+				if (!this.keyboard[state].contros[k.port]) {
+					this.keyboard[state].contros[k.port] = {
+						port: k.port
+					};
+				}
+				let contro = this.keyboard[state].contros[k.port];
+				if (!contro.btns) contro.btns = {};
+				contro.btns[k.act] = k.press;
+				this.passthrough(contro);
 				return false;
-			}
-			if (!this.keyboard[state].contros[k.port]) {
-				this.keyboard[state].contros[k.port] = {
-					port: k.port
-				};
-			}
-			let contro = this.keyboard[state].contros[k.port];
-			if (!contro.btns) contro.btns = {};
-			contro.btns[k.act] = k.press;
-			this.passthrough(contro);
-			return false;
-		}, 'keydown');
+			},
+			'keydown'
+		);
 
-		Mousetrap.bind(key, () => {
-			let state = this.ui;
-			if (!this.keyboard[state]) state = this.uiSub;
-			if (!this.keyboard[state]) state = 'default';
-			if (!this.keyboard[state]) return false;
-			let k = this.keyboard[state].keys[key];
-			if (!k) return false;
-			k.press = 0;
+		Mousetrap.bind(
+			key,
+			() => {
+				let state = this.ui;
+				if (!this.keyboard[state]) state = this.uiSub;
+				if (!this.keyboard[state]) state = 'default';
+				if (!this.keyboard[state]) return false;
+				let k = this.keyboard[state].keys[key];
+				if (!k) return false;
+				k.press = 0;
 
-			if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+				if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+					return false;
+				}
+				let contro = this.keyboard[state].contros[k.port];
+				contro.btns[k.act] = 0;
+				this.passthrough(contro);
 				return false;
-			}
-			let contro = this.keyboard[state].contros[k.port];
-			contro.btns[k.act] = 0;
-			this.passthrough(contro);
-			return false;
-		}, 'keyup');
+			},
+			'keyup'
+		);
 		this.keyboard.bound[key] = true;
 	}
 
 	bindWheel($reels) {
-		$reels[0].addEventListener('wheel', (event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			if ($('.cui.selected').length) return false;
-			let scrollDelta = event.deltaY;
-			pos += scrollDelta * this.mouse.wheel.multi;
-			this.scrollTo(pos, ((!this.mouse.wheel.smooth) ? 1500 : 0));
-			return false;
-		}, {
-			passive: false
-		});
+		$reels[0].addEventListener(
+			'wheel',
+			(event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				if ($('.cui.selected').length) return false;
+				let scrollDelta = event.deltaY;
+				pos += scrollDelta * this.mouse.wheel.multi;
+				this.scrollTo(pos, !this.mouse.wheel.smooth ? 1500 : 0);
+				return false;
+			},
+			{
+				passive: false
+			}
+		);
 	}
 
 	click($elem, act) {

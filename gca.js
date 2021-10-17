@@ -1,7 +1,6 @@
 let gcaJS = require('gca-js');
 
 class GCA {
-
 	constructor() {
 		this.adapters = [];
 		this.connected = false;

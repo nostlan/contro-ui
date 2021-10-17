@@ -29,7 +29,8 @@
 }
 
 .menu textarea {
-	font-family: Consolas, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
+	font-family: Consolas, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono,
+		Courier New, monospace;
 	color: #eee;
 	background: #000;
 	width: 90%;
@@ -66,7 +67,7 @@
 	margin: 0;
 	font-size: 4vh;
 	border-radius: 10px;
-	box-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, .5);
+	box-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, 0.5);
 }
 
 .menu .row-x {
@@ -84,23 +85,23 @@
 }
 
 .menu .row-x .cui {
-	margin-left: 5px;
-	margin-right: 5px;
+	margin-left: 7px;
+	margin-right: 7px;
 }
 
 .menu .row-x .cui:last-child {
-	margin-left: 5px;
-	margin-right: 0;
+	margin-left: 7px;
+	margin-right: 2px;
 }
 
 .menu .row-x .cui:first-child {
-	margin-left: 0;
-	margin-right: 5px;
+	margin-left: 2px;
+	margin-right: 7px;
 }
 
 .menu .row-x .cui:only-child {
-	margin-left: 0;
-	margin-right: 0;
+	margin-left: 2px;
+	margin-right: 2px;
 }
 
 .menu .cursor {
