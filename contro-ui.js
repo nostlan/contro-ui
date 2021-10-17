@@ -1,7 +1,3 @@
-if (!log) {
-	const log = console.log;
-}
-
 let dflt_btnIdxs = {
 	a: 0,
 	b: 1,
@@ -252,7 +248,11 @@ class CUI {
 		// normalize X and Y to nintendo physical layout
 		// this will make the physical layout of an app constant
 		// and doAction choices constant for certain buttons
-		if (this.opt.normalize && ((this.opt.normalize.disable && !new RegExp(`(${this.opt.normalize.disable})`, 'i').test(gm.profile)) || (this.opt.normalize.enable && new RegExp(`(${this.opt.normalize.enable})`, 'i').test(gm.profile)))) {
+		if (
+			this.opt.normalize &&
+			((this.opt.normalize.disable && !new RegExp(`(${this.opt.normalize.disable})`, 'i').test(gm.profile)) ||
+				(this.opt.normalize.enable && new RegExp(`(${this.opt.normalize.enable})`, 'i').test(gm.profile)))
+		) {
 			for (let i in this.opt.normalize.map) {
 				contro.map[i] = gm.map[this.opt.normalize.map[i]] || this.opt.normalize.map[i];
 			}
@@ -480,8 +480,11 @@ class CUI {
 	}
 
 	removeView(state) {
-		if (!this[state].$elem) return;
-		this[state].$elem.empty();
+		if (!this[state].$elem.length) return;
+		let el = this[state].$elem[0];
+		while (el.hasChildNodes()) {
+			el.removeChild(el.lastChild);
+		}
 		if (/main/i.test(state)) {
 			this.uiPrev = null;
 		}
@@ -557,7 +560,13 @@ class CUI {
 		$('body').addClass(state);
 		this.resize(true, state);
 		let isChild = !this.isParent(this.ui, state);
-		if (this.ui && !options.keepBackground && /menu/i.test(this.ui) && (!this[this.ui].keepBackground || isChild) && (!/select/i.test(state) || isChild)) {
+		if (
+			this.ui &&
+			!options.keepBackground &&
+			/menu/i.test(this.ui) &&
+			(!this[this.ui].keepBackground || isChild) &&
+			(!/select/i.test(state) || isChild)
+		) {
 			this[this.ui].$elem.hide();
 		} else {
 			// log('cui: keeping prev ui in background');
@@ -583,22 +592,28 @@ class CUI {
 			id = '#' + id;
 		}
 		const _this = this;
-		$(id + ' .cui').click(function () {
-			if (_this[_this.ui].clickCurDisabled) return;
-			let classes = $(this).attr('class').split(' ');
-			if (classes.includes('cui-disabled')) return;
-			if (classes.includes('cursor') || _this[_this.ui].hoverCurDisabled) {
-				_this.makeCursor($(this));
-				_this.buttonPressed('a');
-			} else {
-				_this.buttonPressed('b');
-			}
-		});
-		$(id + ' .cui').hover(function () {
-			if (!_this[_this.ui].hoverCurDisabled && $(this).parents('#' + _this.id).length) {
-				_this.makeCursor($(this));
-			}
-		});
+
+		let $cuis = $(id + ' .cui');
+
+		for (let i = 0; i < $cuis.length; i++) {
+			let el = $cuis.eq(i)[0];
+			el.onclick = function () {
+				if (_this[_this.ui].clickCurDisabled) return;
+				let classes = $(this).attr('class').split(' ');
+				if (classes.includes('cui-disabled')) return;
+				if (classes.includes('cursor') || _this[_this.ui].hoverCurDisabled) {
+					_this.makeCursor($(this));
+					_this.buttonPressed('a');
+				} else {
+					_this.buttonPressed('b');
+				}
+			};
+			el.onmouseover = function () {
+				if (!_this[_this.ui].hoverCurDisabled && $(this).parents('#' + _this.id).length) {
+					_this.makeCursor($(this));
+				}
+			};
+		}
 	}
 
 	async _move(direction) {
@@ -809,7 +824,13 @@ class CUI {
 			// if button is not pressed, query is false and unchanged
 			if (!contro.btnStates[i] && !query) continue;
 			// if button press ended query is false
-			if (!query && (!isDpadBtn || !this.convertStcksToDpad || (/(up|down)/.test(i) && contro.stickNue.y) || (/(left|right)/.test(i) && contro.stickNue.x))) {
+			if (
+				!query &&
+				(!isDpadBtn ||
+					!this.convertStcksToDpad ||
+					(/(up|down)/.test(i) && contro.stickNue.y) ||
+					(/(left|right)/.test(i) && contro.stickNue.x))
+			) {
 				// log(i + ' button press end');
 				contro.btnStates[i] = 0;
 				continue;
@@ -1150,9 +1171,9 @@ class CUI {
 	}
 
 	click($elem, act) {
-		$elem.click(() => {
+		$elem[0].onclick = () => {
 			this.buttonPressed(act);
-		});
+		};
 		// $(elem).bind('mouseheld', function(e) {
 		// 	this.buttonHeld(act, 2000);
 		// });
