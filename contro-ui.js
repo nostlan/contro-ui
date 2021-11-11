@@ -997,7 +997,7 @@ class CUI {
 		let id = contro.pad.id;
 		if (/xbox/i.test(id)) {
 			contro.type = 'xbox';
-		} else if (/(ps\d|playstation)/i.test(id)) {
+		} else if (/(ps\d|ds\d|dual *shock|six *axis|playstation)/i.test(id)) {
 			contro.type = 'ps';
 		} else if (/(nintendo|wii|switch|joy *con)/i.test(id)) {
 			contro.type = 'nintendo';
