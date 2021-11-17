@@ -749,28 +749,12 @@ class CUI {
 		if (lbl == 'view') {
 			lbl = 'select';
 		}
-		switch (lbl) {
-			case 'up':
-			case 'down':
-			case 'left':
-			case 'right':
-				await this.move(lbl);
-				break;
-			case 'a':
-			case 'b':
-			case 'x':
-			case 'y':
-			case 'l':
-			case 'r':
-			case 'lt':
-			case 'rt':
-			case 'select':
-			case 'start':
-				await this.doAction(lbl);
-				break;
-			default:
-				if (this.opt.v) log('cui: button does nothing');
-				return;
+		if (['up', 'down', 'left', 'right'].includes(lbl)) {
+			await this.move(lbl);
+		} else if (['a', 'b', 'x', 'y', 'l', 'r', 'lt', 'rt', 'select', 'start'].includes(lbl)) {
+			await this.doAction(lbl);
+		} else if (this.opt.v) {
+			log('cui: button does nothing');
 		}
 	}
 
@@ -784,26 +768,10 @@ class CUI {
 		if (lbl == 'view') {
 			lbl = 'select';
 		}
-		switch (lbl) {
-			case 'up':
-			case 'down':
-			case 'left':
-			case 'right':
-			case 'a':
-			case 'b':
-			case 'x':
-			case 'y':
-			case 'l':
-			case 'r':
-			case 'lt':
-			case 'rt':
-			case 'select':
-			case 'start':
-				await this.doHeldAction(lbl, timeHeld);
-				break;
-			default:
-				if (this.opt.v) log('cui: button does nothing');
-				return;
+		if (['up', 'down', 'left', 'right', 'a', 'b', 'x', 'y', 'l', 'r', 'lt', 'rt', 'select', 'start'].includes(lbl)) {
+			await this.doHeldAction(lbl);
+		} else if (this.opt.v) {
+			log('cui: button does nothing');
 		}
 	}
 
