@@ -1111,6 +1111,7 @@ class CUI {
 					return false;
 				}
 				let contro = this.keyboard[state].contros[k.port];
+				if (!contro.btns) contro.btns = {};
 				contro.btns[k.act] = 0;
 				this.passthrough(contro);
 				return false;
