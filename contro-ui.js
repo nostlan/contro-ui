@@ -1110,6 +1110,11 @@ class CUI {
 				if (!this.passthrough || !k.port || !this.isButton(k.act)) {
 					return false;
 				}
+				if (!this.keyboard[state].contros[k.port]) {
+					this.keyboard[state].contros[k.port] = {
+						port: k.port
+					};
+				}
 				let contro = this.keyboard[state].contros[k.port];
 				if (!contro.btns) contro.btns = {};
 				contro.btns[k.act] = 0;
