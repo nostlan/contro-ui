@@ -934,8 +934,8 @@ class CUI {
 				y: pad.axes[contro.axeIdxs.leftStick.y]
 			},
 			right: {
-				x: pad.axes[contro.axeIdxs.leftStick.x],
-				y: pad.axes[contro.axeIdxs.leftStick.y]
+				x: pad.axes[contro.axeIdxs.rightStick.x],
+				y: pad.axes[contro.axeIdxs.rightStick.y]
 			}
 		};
 		let trigs = {
