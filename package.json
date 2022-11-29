@@ -1,36 +1,36 @@
 {
-  "author": "Quinton Ashley",
-  "contributors": [
-    {
-      "name": "Quinton Ashley",
-      "email": "qashto@gmail.com"
-    }
-  ],
-  "entry point": "./contro-ui.js",
-  "keywords": [
-    "pkg"
-  ],
-  "license": "GNU GPLv3",
-  "main": "./contro-ui.js",
-  "maintainers": [
-    {
-      "name": "Quinton Ashley",
-      "email": "qashto@gmail.com"
-    }
-  ],
-  "name": "contro-ui",
-  "private": false,
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/quinton-ashley/contro-ui.git"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "up-outdated": "npm install --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
-    "v": "npm version patch --force",
-    "version": "git add -A",
-    "postversion": "git push",
-    "V": "npm version minor --force"
-  },
-  "version": "3.3.12"
+	"author": "Quinton Ashley",
+	"contributors": [
+		{
+			"name": "Quinton Ashley",
+			"email": "qashto@gmail.com"
+		}
+	],
+	"entry point": "./contro-ui.js",
+	"keywords": [
+		"pkg"
+	],
+	"license": "GNU GPLv3",
+	"main": "./contro-ui.js",
+	"maintainers": [
+		{
+			"name": "Quinton Ashley",
+			"email": "qashto@gmail.com"
+		}
+	],
+	"name": "contro-ui",
+	"private": false,
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/quinton-ashley/contro-ui.git"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"up-outdated": "npm install --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
+		"version": "git add -A",
+		"postversion": "git push",
+		"v": "npm version patch --force",
+		"V": "npm version minor --force"
+	},
+	"version": "3.3.13"
 }
