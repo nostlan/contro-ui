@@ -1053,7 +1053,7 @@ class CUI {
 			this.keyboard[binding.state].keys[key] = {
 				press: 0,
 				act: binding.act,
-				port: binding.port
+				port: Number(binding.port || 0)
 			};
 		}
 		// no need to rebind key
@@ -1080,7 +1080,7 @@ class CUI {
 				} else if (k.act) {
 					this.doHeldAction(k.act, k.press * 86);
 				}
-				if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+				if (!this.passthrough || k.port === undefined || !this.isButton(k.act)) {
 					return false;
 				}
 				if (!this.keyboard[state].contros[k.port]) {
@@ -1108,7 +1108,7 @@ class CUI {
 				if (!k) return false;
 				k.press = 0;
 
-				if (!this.passthrough || !k.port || !this.isButton(k.act)) {
+				if (!this.passthrough || k.port === undefined || !this.isButton(k.act)) {
 					return false;
 				}
 				if (!this.keyboard[state].contros[k.port]) {
