@@ -284,6 +284,7 @@ class CUI {
 
 	async doAction(act) {
 		if (this.ui == 'alertMenu' && act == 'a') {
+			cui.finishAlert();
 			act = uiAfterAlert;
 			uiAfterAlert = '';
 			if (act == 'quit') {
@@ -338,10 +339,10 @@ class CUI {
 
 	async resize(adjust, state) {
 		state = state || this.ui;
-		if (/menu|select/i.test(state)) {
-			let $menu = this[state].$elem;
-			$menu.css('margin-top', window.innerHeight * 0.5 - $menu.outerHeight() * 0.5);
-		}
+		// if (/menu|select/i.test(state)) {
+		// 	let $menu = this[state].$elem;
+		// 	$menu.css('margin-top', window.innerHeight * 0.5 - $menu.outerHeight() * 0.5);
+		// }
 		if (this.onResize) {
 			await this.onResize(adjust);
 		}
@@ -1166,7 +1167,6 @@ class CUI {
     			</div>
 				</div>`);
 			$alertMenu = $('#alertMenu_9999');
-			$alertMenu.prepend(`<h1>Alert</h1><p>default alert</p>`);
 			this.addListeners('#alertMenu_9999');
 		}
 		$('#alertMenu_9999 > :not(.row-y)').remove();
@@ -1178,13 +1178,19 @@ class CUI {
 				$('#alertMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
 			}
 		}
-		$('#alertMenu_9999').prepend(`<h1>${title}</h1>`);
+		if (title) $('#alertMenu_9999').prepend(`<h1>${title}</h1>`);
 		await this.change('alertMenu_9999');
 		if (stateAfterAlert == 'quit') {
 			$('#alertMenu_9999 .opt0').text('close');
 			// stop
 			await delay(100000000000);
 		}
+		$alertMenu.removeClass('dim');
+		return new Promise((resolve) => {
+			cui.finishAlert = () => {
+				resolve();
+			};
+		});
 	}
 
 	async error(msg, code, stateAfterError) {
