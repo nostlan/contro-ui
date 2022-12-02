@@ -337,17 +337,12 @@ class CUI {
 		}
 	}
 
-	async resize(adjust, state) {
-		state = state || this.ui;
-		// if (/menu|select/i.test(state)) {
-		// 	let $menu = this[state].$elem;
-		// 	$menu.css('margin-top', window.innerHeight * 0.5 - $menu.outerHeight() * 0.5);
-		// }
+	async resize() {
 		if (this.onResize) {
-			await this.onResize(adjust);
+			await this.onResize();
 		}
 		if (this.ui && this[this.ui].onResize) {
-			await this[this.ui].onResize(adjust);
+			await this[this.ui].onResize();
 		}
 	}
 
@@ -403,8 +398,6 @@ class CUI {
 	}
 
 	scrollToCursor(time, minDistance) {
-		// old behavior
-		// if (/menu|select/i.test(this.ui)) return;
 		if (this.opt.v) log($cursor);
 		let $reel = $cursor.parent();
 		let $reels = $reel.parent().children();
@@ -420,7 +413,7 @@ class CUI {
 			position -= window.innerHeight * 0.5;
 		}
 		let scrollDist = Math.abs(pos - position);
-		if (minDistance == null) minDistance = 0.4;
+		minDistance ??= 0.4;
 		if (!/select/i.test(this.ui) && scrollDist < window.innerHeight * minDistance) return;
 		let sTime;
 		if (time > -1) {
@@ -559,7 +552,6 @@ class CUI {
 		}
 		$('body').removeClass(this.ui);
 		$('body').addClass(state);
-		this.resize(true, state);
 		let isChild = !this.isParent(this.ui, state);
 		if (
 			this.ui &&
@@ -1026,7 +1018,9 @@ class CUI {
 		}
 		this.addListeners();
 		this.loop();
-		$(window).resize(this.resize);
+		addEventListener('resize', () => {
+			this.resize();
+		});
 	}
 
 	// bind key to bindings
