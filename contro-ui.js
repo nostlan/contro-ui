@@ -1182,7 +1182,7 @@ class CUI {
 		$alertMenu.removeClass('dim');
 		return new Promise((resolve) => {
 			cui.finishAlert = () => {
-				resolve();
+				resolve(true);
 			};
 		});
 	}
