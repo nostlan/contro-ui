@@ -173,6 +173,8 @@ class CUI {
 		this.convertStcksToDpad = false;
 
 		this.State = CuiState;
+
+		this.confirm = this.alert;
 	}
 
 	async onChange(state, subState) {
@@ -283,8 +285,8 @@ class CUI {
 	}
 
 	async doAction(act) {
-		if (this.ui == 'alertMenu' && act == 'a') {
-			cui.finishAlert();
+		if (this.ui == 'alertMenu' && (act == 'a' || act == 'b')) {
+			cui.finishAlert(act);
 			act = uiAfterAlert;
 			uiAfterAlert = '';
 			if (act == 'quit') {
@@ -1181,8 +1183,9 @@ class CUI {
 		}
 		$alertMenu.removeClass('dim');
 		return new Promise((resolve) => {
-			cui.finishAlert = () => {
-				resolve(true);
+			cui.finishAlert = (act) => {
+				if (act == 'a') resolve(true);
+				else resolve(false);
 			};
 		});
 	}
