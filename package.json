@@ -32,5 +32,5 @@
 		"v": "npm version patch --force",
 		"V": "npm version minor --force"
 	},
-	"version": "3.3.18"
+	"version": "3.3.19"
 }

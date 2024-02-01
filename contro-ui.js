@@ -760,11 +760,9 @@ class CUI {
 			};
 		}
 		let lbl = btn.label.toLowerCase();
-		if (lbl == 'view') {
-			lbl = 'select';
-		}
+		if (lbl == 'view') lbl = 'select';
 		if (['up', 'down', 'left', 'right', 'a', 'b', 'x', 'y', 'l', 'r', 'lt', 'rt', 'select', 'start'].includes(lbl)) {
-			await this.doHeldAction(lbl);
+			await this.doHeldAction(lbl, timeHeld);
 		} else if (this.opt.v) {
 			log('cui: button does nothing');
 		}
@@ -803,7 +801,7 @@ class CUI {
 			contro.btnStates[i] += 1;
 			if (contro.btnStates[i] == 1) {
 				this.buttonPressed(i);
-			} else {
+			} else if (contro.btnStates[i] >= 60) {
 				this.buttonHeld(i, contro.btnStates[i] * 16);
 			}
 
