@@ -1,9 +1,9 @@
 # contro-ui
 
-This UI library is used by [Nostlan](https://github.com/quinton-ashley/nostlan) to create a UI that can be interacted with via game controllers and/or mouse and keyboard. It requires jQuery and Mousetrap. Optionally you can install `gca-js` as a peer dependency for Gamecube controller support.
+This UI library is used by [Nostlan](https://github.com/nostlan/nostlan) to create a UI that can be interacted with via game controllers and/or mouse and keyboard. It requires jQuery and Mousetrap. Optionally you can install `gca-js` as a peer dependency for Gamecube controller support.
 
 ```javascript
-global.cui = require("contro-ui");
+global.cui = require('contro-ui');
 cui.start();
 ```
 
@@ -110,10 +110,10 @@ For more info look at the [Mousetrap documentation](https://craig.is/killing/mic
 
 ```javascript
 // example of binding keyboard keys
-for (let char of "abcdefghijklmnopqrstuvwxyz1234567890") {
-  cui.bind(char, "char-" + char);
+for (let char of 'abcdefghijklmnopqrstuvwxyz1234567890') {
+	cui.bind(char, 'char-' + char);
 }
-cui.bind("space", "char-_");
+cui.bind('space', 'char-_');
 ```
 
 ### click(jQuery \$elem, String act)
@@ -139,10 +139,10 @@ Error code can be a Number or String, calls the alert function internally.
 ```javascript
 // example that displays unexpected errors to users
 // before quitting the app
-const process = require("process");
-process.on("uncaughtException", ror => {
-  console.error(ror);
-  cui.err(`<textarea rows=8>${ror.stack}</textarea>`, "App crashed!", "quit");
+const process = require('process');
+process.on('uncaughtException', (ror) => {
+	console.error(ror);
+	cui.err(`<textarea rows=8>${ror.stack}</textarea>`, 'App crashed!', 'quit');
 });
 ```
 

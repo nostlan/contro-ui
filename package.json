@@ -22,7 +22,7 @@
 	"private": false,
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/quinton-ashley/contro-ui.git"
+		"url": "git+https://github.com/nostlan/contro-ui.git"
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
@@ -32,5 +32,5 @@
 		"v": "npm version patch --force",
 		"V": "npm version minor --force"
 	},
-	"version": "3.3.19"
+	"version": "3.4.0"
 }

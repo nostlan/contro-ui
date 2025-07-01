@@ -173,8 +173,6 @@ class CUI {
 		this.convertStcksToDpad = false;
 
 		this.State = CuiState;
-
-		this.confirm = this.alert;
 	}
 
 	async onChange(state, subState) {
@@ -286,6 +284,7 @@ class CUI {
 
 	async doAction(act) {
 		if (this.ui == 'alertMenu' && (act == 'a' || act == 'b')) {
+			act = this.$cursor.attr('name');
 			cui.finishAlert(act);
 			act = uiAfterAlert;
 			uiAfterAlert = '';
@@ -1157,7 +1156,7 @@ class CUI {
 			$('body').prepend(`
 				<div class="menu" id="alertMenu_9999">
   				<div class="row-y">
-        		<div class="cui opt0" name="alert-okay">Okay</div>
+        		<div class="cui opt0" name="okay">okay</div>
     			</div>
 				</div>`);
 			$alertMenu = $('#alertMenu_9999');
@@ -1182,7 +1181,48 @@ class CUI {
 		$alertMenu.removeClass('dim');
 		return new Promise((resolve) => {
 			cui.finishAlert = (act) => {
-				if (act == 'a') resolve(true);
+				if (act == 'okay') resolve(true);
+				else resolve(false);
+			};
+		});
+	}
+
+	async confirm(msg, title, stateIfConfirmed) {
+		if (typeof msg != 'string') return;
+		uiAfterAlert = stateIfConfirmed;
+		log('cui: ' + msg);
+		let $alertMenu = $('#alertMenu_9999');
+		if (!$alertMenu.length) {
+			$('body').prepend(`
+				<div class="menu" id="alertMenu_9999">
+  				<div class="row-y">
+        		<div class="cui opt0" name="okay">okay</div>
+						<div class="cui opt1" name="cancel">cancel</div>
+    			</div>
+				</div>`);
+			$alertMenu = $('#alertMenu_9999');
+			this.addListeners('#alertMenu_9999');
+		}
+		$('#alertMenu_9999 > :not(.row-y)').remove();
+		if (/<[^>]*>/.test(msg)) {
+			$('#alertMenu_9999').prepend(msg);
+		} else {
+			let msgArr = msg.split('\n');
+			for (let i = msgArr.length - 1; i >= 0; i--) {
+				$('#alertMenu_9999').prepend(`<p>${msgArr[i]}</p>`);
+			}
+		}
+		if (title) $('#alertMenu_9999').prepend(`<h1>${title}</h1>`);
+		await this.change('alertMenu_9999');
+		if (stateIfConfirmed == 'quit') {
+			$('#alertMenu_9999 .opt0').text('close');
+			// stop
+			await delay(100000000000);
+		}
+		$alertMenu.removeClass('dim');
+		return new Promise((resolve) => {
+			cui.finishAlert = (act) => {
+				if (act == 'okay') resolve(true);
 				else resolve(false);
 			};
 		});
