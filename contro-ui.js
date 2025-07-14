@@ -399,6 +399,7 @@ class CUI {
 	}
 
 	scrollToCursor(time, minDistance) {
+		if (!$cursor?.length) return false;
 		if (this.opt.v) log($cursor);
 		let $reel = $cursor.parent();
 		let $reels = $reel.parent().children();
@@ -417,8 +418,8 @@ class CUI {
 		minDistance ??= 0.4;
 		if (!/select/i.test(this.ui) && scrollDist < window.innerHeight * minDistance) return;
 		let sTime;
-		if (time > -1) {
-			sTime = time || 1;
+		if (time >= 0) {
+			sTime = time || 0;
 		} else {
 			sTime = (window.innerHeight * 2 - $cursor.height()) / 5;
 		}
@@ -436,7 +437,7 @@ class CUI {
 	}
 
 	makeCursor($newCursor, state) {
-		if (!$newCursor) return;
+		if (!$newCursor?.length) return;
 		state = state || this.ui;
 		if (this.beforeMove && $newCursor != $cursor) {
 			this.beforeMove($cursor, state);
