@@ -535,7 +535,6 @@ class CUI {
 			} else {
 				this.makeCursor(this[state].$cursor, state);
 			}
-			this.scrollToCursor(0, 0);
 		} else if (/select/i.test(state)) {
 			this.makeCursor(this[this.getParent(state)].$cursor, state);
 		} else {
